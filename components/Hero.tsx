@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, MessageCircleQuestion, BookOpen } from "lucide-react";
 
 const categories = [
@@ -76,13 +77,15 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Image placeholder */}
+          {/* Rabbi image */}
           <div className="flex-shrink-0">
-            <div
-              className="w-48 h-48 md:w-64 md:h-64 rounded-full border-4 border-white/30 overflow-hidden flex items-center justify-center text-6xl"
-              style={{ background: "var(--color-primary-dark)" }}
-            >
-              👨‍🏫
+            <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-full border-4 border-white/30 overflow-hidden">
+              <Image
+                src="/rabbi.jpg"
+                alt="הרב רועי אמגר"
+                fill
+                className="object-cover object-top"
+              />
             </div>
           </div>
         </div>

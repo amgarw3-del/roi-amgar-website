@@ -5,6 +5,7 @@ import BlogCard from "@/components/BlogCard";
 import QnACard from "@/components/QnACard";
 import NewsletterSignup from "@/components/NewsletterSignup";
 import VideoCarousel from "@/components/VideoCarousel";
+import SubscribeBanner from "@/components/SubscribeBanner";
 import { fetchYouTubeVideos } from "@/lib/youtube";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -89,6 +90,9 @@ export default async function HomePage() {
   return (
     <>
       <Hero />
+
+      {/* רשימת דיוור */}
+      <SubscribeBanner />
 
       {/* קטגוריות */}
       <section className="section" style={{ background: "var(--color-warm)" }}>
