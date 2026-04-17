@@ -9,7 +9,7 @@ export interface YouTubeVideo {
 const CHANNEL_ID = "UCpep2f42VluYwMqZ4kXiQTA";
 
 export async function fetchYouTubeVideos(
-  maxResults = 16,
+  maxResults = 50,
   videoDuration?: "short" | "medium" | "long"
 ): Promise<YouTubeVideo[]> {
   const key = process.env.YOUTUBE_API_KEY;

@@ -6,6 +6,7 @@ import QnACard from "@/components/QnACard";
 import NewsletterSignup from "@/components/NewsletterSignup";
 import VideoCarousel from "@/components/VideoCarousel";
 import SubscribeBanner from "@/components/SubscribeBanner";
+import DonationWidget from "@/components/DonationWidget";
 import { fetchYouTubeVideos } from "@/lib/youtube";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -79,17 +80,24 @@ const socialLinks = [
 ];
 
 export default async function HomePage() {
-  const [videos, posts, qnas, ytShiurim, ytShorts] = await Promise.all([
+  const [videos, posts, qnas, ytLong, ytMedium, ytShorts] = await Promise.all([
     client.fetch(queries.latestVideos(6)).catch(() => []),
     client.fetch(queries.latestPosts(4)).catch(() => []),
     client.fetch(queries.latestQna(3)).catch(() => []),
-    fetchYouTubeVideos(16, "long"),
-    fetchYouTubeVideos(12, "short"),
+    fetchYouTubeVideos(50, "long"),
+    fetchYouTubeVideos(50, "medium"),
+    fetchYouTubeVideos(50, "short"),
   ]);
+
+  // מיזוג שיעורים ארוכים + בינוניים, ממוינים לפי תאריך
+  const ytShiurim = [...ytLong, ...ytMedium].sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
 
   return (
     <>
       <Hero />
+      <DonationWidget />
 
       {/* רשימת דיוור */}
       <SubscribeBanner />

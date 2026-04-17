@@ -29,13 +29,7 @@ export default function Hero() {
         <div className="flex flex-col md:flex-row items-center gap-10">
           {/* Text */}
           <div className="flex-1 text-center md:text-right">
-            <p
-              className="text-sm font-bold tracking-widest uppercase mb-4 opacity-80"
-              style={{ color: "var(--color-accent-light)" }}
-            >
-              תורה לחיים
-            </p>
-            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
+<h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
               הרב רועי אמגר
             </h1>
             <p className="text-xl text-white/80 mb-8 max-w-lg leading-relaxed">
