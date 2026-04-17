@@ -97,6 +97,13 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
     if (track) track.style.cursor = "grab";
   }, []);
 
+  // Escape key לסגירת מודאל
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setActiveVideo(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   if (!videos.length) return null;
 
   return (
@@ -200,15 +207,39 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
 
       {/* מודאל */}
       {activeVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setActiveVideo(null)}>
-          <div className="relative w-full max-w-3xl mx-4" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setActiveVideo(null)} className="absolute -top-10 left-0 text-white text-3xl hover:text-gray-300 transition-colors" aria-label="סגור">✕</button>
-            <div className="rounded-2xl overflow-hidden" style={{ aspectRatio: isShorts ? "9/16" : "16/9", maxHeight: "80vh" }}>
+        <div
+          className="fixed inset-0 z-50 bg-black/80"
+          onClick={() => setActiveVideo(null)}
+        >
+          {/* כפתור סגירה */}
+          <button
+            onClick={() => setActiveVideo(null)}
+            className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 transition-colors flex items-center justify-center text-white text-xl"
+            aria-label="סגור"
+          >
+            ✕
+          </button>
+          {/* נגן — stopPropagation רק על ה-iframe עצמו */}
+          <div
+            className="absolute inset-0 flex items-center justify-center p-4"
+            style={{ pointerEvents: "none" }}
+          >
+            <div
+              className="rounded-2xl overflow-hidden w-full max-w-3xl"
+              style={{
+                aspectRatio: isShorts ? "9/16" : "16/9",
+                maxHeight: "85vh",
+                pointerEvents: "auto",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <iframe
-                width="100%" height="100%"
+                width="100%"
+                height="100%"
                 src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1&rel=0`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen className="w-full h-full"
+                allowFullScreen
+                className="w-full h-full"
               />
             </div>
           </div>

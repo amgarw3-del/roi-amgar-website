@@ -31,7 +31,7 @@ const securityHeaders = [
       // Scripts: self + Vercel analytics + Cloudflare Turnstile
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com",
       // Images: self + YouTube thumbnails + Sanity CDN
-      "img-src 'self' data: blob: https://img.youtube.com https://cdn.sanity.io",
+      "img-src 'self' data: blob: https://img.youtube.com https://i.ytimg.com https://cdn.sanity.io",
       // Frames: YouTube embeds בלבד
       "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com",
       // Connect: Sanity API + external APIs

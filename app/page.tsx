@@ -94,6 +94,16 @@ export default async function HomePage() {
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 
+  // סרטוני "הכלה בהליכה" — בינוניים לפי שם
+  const HALA_KEYWORDS = ["הכלה", "הכלה בהליכה"];
+  const ytHala = ytMedium.filter((v) =>
+    HALA_KEYWORDS.some((kw) => v.title.includes(kw))
+  );
+  // מיזוג ל-ytShorts: שורטס + הכלה בהליכה
+  const ytShortsAll = [...ytShorts, ...ytHala].sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
+
   return (
     <>
       <Hero />
@@ -135,10 +145,10 @@ export default async function HomePage() {
       )}
 
       {/* רגע של תורה — Shorts carousel */}
-      {ytShorts.length > 0 && (
+      {ytShortsAll.length > 0 && (
         <section className="section" style={{ background: "var(--color-warm)" }}>
           <div className="container">
-            <VideoCarousel videos={ytShorts} title="רגע של תורה" isShorts />
+            <VideoCarousel videos={ytShortsAll} title="רגע של תורה" isShorts />
           </div>
         </section>
       )}
