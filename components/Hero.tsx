@@ -33,7 +33,7 @@ export default function Hero() {
               הרב רועי אמגר
             </h1>
             <p className="text-xl text-white/80 mb-8 max-w-lg leading-relaxed">
-              שיעורי תורה, הלכה, אמונה וזוגיות — מתמלל חיים של אמת לחיים של יהדות
+              תורה לחיים, השראה תובנות כלים ושיעורים מתורת ישראל
             </p>
 
             <div className="flex flex-wrap gap-3 justify-center md:justify-start">

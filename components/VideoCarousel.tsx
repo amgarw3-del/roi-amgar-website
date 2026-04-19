@@ -9,10 +9,10 @@ const SHORTS_CATEGORIES = [
   { label: "פרשת שבוע", key: "פרשת" },
   { label: "אור החיים", key: "אור החיים" },
   { label: "חיזוק באמונה", key: "אמונה" },
-  { label: "הכלה בהליכה", key: "הכלה" },
+  { label: "הלכה בהליכה", key: "הלכה" },
 ];
 
-const EXCLUDE_TITLES = ["שיר השירים"];
+const EXCLUDE_TITLES = ["שיר השירים", "תלמוד תורה וירטואלי"];
 
 interface Props {
   videos: YouTubeVideo[];

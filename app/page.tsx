@@ -95,7 +95,7 @@ export default async function HomePage() {
   );
 
   // סרטוני "הכלה בהליכה" — בינוניים לפי שם
-  const HALA_KEYWORDS = ["הכלה", "הכלה בהליכה"];
+  const HALA_KEYWORDS = ["הלכה", "הלכה בהליכה"];
   const ytHala = ytMedium.filter((v) =>
     HALA_KEYWORDS.some((kw) => v.title.includes(kw))
   );

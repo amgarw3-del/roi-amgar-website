@@ -19,7 +19,7 @@ export default function NewsletterSignup() {
   }
 
   return (
-    <section style={{ background: "var(--color-warm)" }} className="py-12">
+    <section style={{ background: "white" }} className="py-12">
       <div className="container">
         <div className="max-w-xl mx-auto text-center">
           <div
