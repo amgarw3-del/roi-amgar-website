@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, Search } from "lucide-react";
+import Logo from "./Logo";
 
 const navLinks = [
   { href: "/parasha", label: "פרשת שבוע" },
@@ -23,12 +24,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <span
-              className="text-xl font-bold"
-              style={{ color: "var(--color-primary)" }}
-            >
-              הרב רועי אמגר
-            </span>
+            <Logo />
           </Link>
 
           {/* Desktop nav */}
