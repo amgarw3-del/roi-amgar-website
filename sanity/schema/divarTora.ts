@@ -44,6 +44,7 @@ export const divarToraSchema = defineType({
       },
       initialValue: "shiur",
     }),
+    defineField({ name: "sourceVideoId", title: "מזהה סרטון מקור", type: "string" }),
     defineField({ name: "hebrewDate", title: "תאריך עברי", type: "string" }),
     defineField({ name: "publishedAt", title: "תאריך פרסום", type: "datetime" }),
     defineField({
