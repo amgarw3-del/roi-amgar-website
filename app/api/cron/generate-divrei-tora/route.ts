@@ -3,6 +3,7 @@ import { YoutubeTranscript } from "youtube-transcript";
 import { createClient } from "@sanity/client";
 import { fetchYouTubeVideos } from "@/lib/youtube";
 import { generateDvarTora } from "@/lib/generate-dvar-tora";
+import { sendDvarToraForApproval } from "@/lib/send-email";
 
 const sanity = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
@@ -87,6 +88,7 @@ export async function GET(req: NextRequest) {
 
     let totalCreated = 0;
     const errors: string[] = [];
+    const allGenerated: Array<{ title: string; teaser: string; content: string; category: string; sourceVideoTitle?: string }> = [];
 
     for (const video of newVideos) {
       const transcript = await fetchTranscript(video.videoId);
@@ -102,13 +104,21 @@ export async function GET(req: NextRequest) {
 
       for (const dvar of divarToras) {
         await saveDraftToSanity(dvar, video.videoId, video.publishedAt);
+        allGenerated.push({ ...dvar, sourceVideoTitle: video.title });
         totalCreated++;
       }
+    }
+
+    if (allGenerated.length > 0) {
+      await sendDvarToraForApproval(allGenerated).catch((e) =>
+        errors.push(`email error: ${e.message}`)
+      );
     }
 
     return NextResponse.json({
       processed: newVideos.length,
       created: totalCreated,
+      emailSent: allGenerated.length > 0,
       errors,
     });
   } catch (err) {
