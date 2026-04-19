@@ -80,6 +80,24 @@ export const queries = {
     _id, name, hebrewName, slug, description
   }`,
 
+  // דברי תורה אחרונים
+  latestDivarTora: (limit = 6) =>
+    `*[_type == "divarTora" && status == "published"] | order(publishedAt desc) [0...${limit}] {
+      _id, title, slug, teaser, category->{hebrewName, slug}, publishedAt
+    }`,
+
+  // דברי תורה לפי קטגוריה
+  divarToraByCategory: (categorySlug: string, limit = 12) =>
+    `*[_type == "divarTora" && status == "published" && category->slug.current == "${categorySlug}"] | order(publishedAt desc) [0...${limit}] {
+      _id, title, slug, teaser, publishedAt
+    }`,
+
+  // דבר תורה בודד
+  divarToraBySlug: (slug: string) =>
+    `*[_type == "divarTora" && slug.current == "${slug}" && status == "published"][0] {
+      _id, title, slug, teaser, content, category->{hebrewName, slug}, publishedAt, hebrewDate, sourceType
+    }`,
+
   // סטטוס סריקה (לאוטומציה)
   scanStatus: `*[_type == "scanStatus"][0] {
     lastScannedAt, latestVideoId, latestPostId

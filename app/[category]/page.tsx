@@ -1,6 +1,7 @@
 import { client, queries } from "@/sanity/client";
 import VideoCard from "@/components/VideoCard";
 import BlogCard from "@/components/BlogCard";
+import DivarToraCard from "@/components/DivarToraCard";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -35,9 +36,10 @@ export default async function CategoryPage({ params }: Props) {
   const info = categoryMap[category];
   if (!info) notFound();
 
-  const [videos, posts] = await Promise.all([
+  const [videos, posts, divarTora] = await Promise.all([
     client.fetch(queries.byCategory(category, "video")).catch(() => []),
     client.fetch(queries.byCategory(category, "blogPost")).catch(() => []),
+    client.fetch(queries.divarToraByCategory(category)).catch(() => []),
   ]);
 
   return (
@@ -82,7 +84,21 @@ export default async function CategoryPage({ params }: Props) {
           </section>
         )}
 
-        {videos.length === 0 && posts.length === 0 && (
+        {/* דברי תורה */}
+        {divarTora.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-xl font-bold mb-4" style={{ color: "var(--color-primary)" }}>
+              דברי תורה
+            </h2>
+            <div className="divider mb-5" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {divarTora.map((d: any) => <DivarToraCard key={d._id} {...d} />)}
+            </div>
+          </section>
+        )}
+
+        {videos.length === 0 && posts.length === 0 && divarTora.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             <p className="text-lg">תוכן יתווסף בקרוב לנושא זה</p>
           </div>

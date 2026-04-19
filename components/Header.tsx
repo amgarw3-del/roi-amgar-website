@@ -9,7 +9,7 @@ const navLinks = [
   { href: "/halacha", label: "הלכה" },
   { href: "/emuna", label: "אמונה" },
   { href: "/zugiyut", label: "זוגיות" },
-  { href: "/rega-shel-tora", label: "רגע של תורה" },
+  { href: "/dvar-tora", label: "דברי תורה" },
   { href: "/moadim", label: "מועדים" },
   { href: "/shaal", label: "שאל את הרב" },
 ];
