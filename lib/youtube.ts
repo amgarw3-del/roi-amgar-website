@@ -1,3 +1,16 @@
+function decodeHTMLEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
+    .replace(/&#x([0-9A-Fa-f]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
 export interface YouTubeVideo {
   videoId: string;
   title: string;
@@ -43,7 +56,7 @@ export async function fetchYouTubeVideos(
         };
       }) => ({
         videoId: item.id.videoId,
-        title: item.snippet.title,
+        title: decodeHTMLEntities(item.snippet.title),
         thumbnail:
           item.snippet.thumbnails?.high?.url ||
           item.snippet.thumbnails?.medium?.url ||
