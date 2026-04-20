@@ -11,7 +11,7 @@ import { fetchYouTubeVideos } from "@/lib/youtube";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export const revalidate = 3600; // ISR every hour
+export const dynamic = "force-dynamic";
 
 const categories = [
   { href: "/parasha", label: "פרשת שבוע", emoji: "📖", desc: "שיעורים ודברי תורה לפרשה" },
