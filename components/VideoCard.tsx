@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Play, Clock } from "lucide-react";
+import { decodeHTMLEntities } from "@/lib/decodeHtml";
 
 interface VideoCardProps {
   _id: string;
@@ -76,7 +77,7 @@ export default function VideoCard({
         </div>
 
         <h3 className="font-bold text-gray-900 mb-2 leading-snug group-hover:text-primary transition-colors line-clamp-2">
-          {title}
+          {decodeHTMLEntities(title)}
         </h3>
 
         {summary && (

@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import type { YouTubeVideo } from "@/lib/youtube";
+import { decodeHTMLEntities } from "@/lib/decodeHtml";
 
 const SHORTS_CATEGORIES = [
   { label: "הכל", key: "" },
@@ -198,7 +199,7 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
                 )}
               </div>
               <p className="text-sm font-semibold leading-snug line-clamp-2" style={{ color: "var(--color-primary)", direction: "rtl" }}>
-                {v.title}
+                {decodeHTMLEntities(v.title)}
               </p>
             </button>
           ))}
