@@ -41,7 +41,7 @@ export async function fetchYouTubeVideos(
   try {
     const res = await fetch(
       `https://www.googleapis.com/youtube/v3/search?${params}`,
-      { next: { revalidate: 3600 } }
+      { cache: "no-store" }
     );
     if (!res.ok) return [];
     const data = await res.json();
