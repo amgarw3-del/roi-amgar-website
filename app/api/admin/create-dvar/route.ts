@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
 
-const sanity = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
-  token: process.env.SANITY_API_TOKEN,
-  apiVersion: "2024-01-01",
-  useCdn: false,
-});
+export const dynamic = "force-dynamic";
 
 function toSlug(text: string): string {
   return text
@@ -30,6 +24,14 @@ export async function POST(req: NextRequest) {
   if (!title || !content) {
     return NextResponse.json({ error: "כותרת ותוכן הם שדות חובה" }, { status: 400 });
   }
+
+  const sanity = createClient({
+    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
+    token: process.env.SANITY_API_TOKEN,
+    apiVersion: "2024-01-01",
+    useCdn: false,
+  });
 
   const slug = toSlug(title) || `dvar-${Date.now()}`;
 

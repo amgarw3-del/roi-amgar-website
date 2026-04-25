@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
 import { sendDvarToraForApproval } from "@/lib/send-email";
 
-const sanity = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
-  token: process.env.SANITY_API_TOKEN,
-  apiVersion: "2024-01-01",
-  useCdn: false,
-});
+export const dynamic = "force-dynamic";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ||
@@ -20,6 +14,14 @@ export async function GET(req: NextRequest) {
   if (secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const sanity = createClient({
+    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
+    token: process.env.SANITY_API_TOKEN,
+    apiVersion: "2024-01-01",
+    useCdn: false,
+  });
 
   try {
     const pending = await sanity.fetch<
@@ -48,7 +50,6 @@ export async function GET(req: NextRequest) {
 
     await sendDvarToraForApproval(items);
 
-    // mark as emailed
     await Promise.all(
       pending.map((d) =>
         sanity

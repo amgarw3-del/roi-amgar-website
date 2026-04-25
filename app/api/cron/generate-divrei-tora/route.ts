@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { YoutubeTranscript } from "youtube-transcript";
-import { createClient } from "@sanity/client";
+import { createClient, SanityClient } from "@sanity/client";
 import { fetchYouTubeVideos } from "@/lib/youtube";
 import { generateDvarTora } from "@/lib/generate-dvar-tora";
 import { sendDvarToraForApproval } from "@/lib/send-email";
 
-const sanity = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
-  token: process.env.SANITY_API_TOKEN,
-  apiVersion: "2024-01-01",
-  useCdn: false,
-});
+export const dynamic = "force-dynamic";
 
-async function getProcessedVideoIds(): Promise<Set<string>> {
+async function getProcessedVideoIds(sanity: SanityClient): Promise<Set<string>> {
   const ids = await sanity.fetch<string[]>(
     `*[_type == "divarTora" && defined(sourceVideoId)].sourceVideoId`
   );
@@ -35,6 +29,7 @@ async function fetchTranscript(videoId: string): Promise<string | null> {
 }
 
 async function saveDraftToSanity(
+  sanity: SanityClient,
   dvar: { title: string; teaser: string; content: string; category: string },
   videoId: string,
   publishedAt: string
@@ -74,10 +69,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const sanity = createClient({
+    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
+    token: process.env.SANITY_API_TOKEN,
+    apiVersion: "2024-01-01",
+    useCdn: false,
+  });
+
   try {
     const [videos, processedIds] = await Promise.all([
       fetchYouTubeVideos(10),
-      getProcessedVideoIds(),
+      getProcessedVideoIds(sanity),
     ]);
 
     const newVideos = videos.filter((v) => !processedIds.has(v.videoId)).slice(0, 3);
@@ -103,7 +106,7 @@ export async function GET(req: NextRequest) {
       });
 
       for (const dvar of divarToras) {
-        await saveDraftToSanity(dvar, video.videoId, video.publishedAt);
+        await saveDraftToSanity(sanity, dvar, video.videoId, video.publishedAt);
         allGenerated.push({ ...dvar, sourceVideoTitle: video.title });
         totalCreated++;
       }

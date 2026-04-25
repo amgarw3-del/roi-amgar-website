@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
 import { timingSafeEqual, createHash } from "crypto";
 
-const sanity = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
-  token: process.env.SANITY_API_TOKEN,
-  apiVersion: "2024-01-01",
-  useCdn: false,
-});
+export const dynamic = "force-dynamic";
 
 function safeCompare(a: string, b: string): boolean {
   const ha = createHash("sha256").update(a).digest();
@@ -29,6 +23,14 @@ export async function GET(req: NextRequest) {
   if (!safeCompare(token, approvalSecret)) {
     return new NextResponse("לא מורשה", { status: 401 });
   }
+
+  const sanity = createClient({
+    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
+    token: process.env.SANITY_API_TOKEN,
+    apiVersion: "2024-01-01",
+    useCdn: false,
+  });
 
   try {
     await sanity
