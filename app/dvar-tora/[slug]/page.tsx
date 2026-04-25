@@ -2,7 +2,7 @@ import { client, queries } from "@/sanity/client";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, Download } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -50,6 +50,18 @@ export default async function DivarToraSlugPage({ params }: Props) {
           {item.title}
         </h1>
         {date && <p className="text-sm text-gray-400">{item.hebrewDate ?? date}</p>}
+      </div>
+
+      <div className="flex items-center gap-3 mb-4">
+        <a
+          href={`/api/download-dvar/${item.slug.current}`}
+          download
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-80"
+          style={{ background: "var(--color-warm)", color: "var(--color-primary)" }}
+        >
+          <Download size={15} />
+          להורדה כ-Word
+        </a>
       </div>
 
       <div className="divider" />
