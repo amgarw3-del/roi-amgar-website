@@ -6,6 +6,7 @@ import {
   AlignmentType,
   SectionType,
 } from "docx";
+import * as JSZip from "jszip";
 
 const HE = { bidirectional: "he-IL" };
 
@@ -15,6 +16,34 @@ function rtlRun(opts: ConstructorParameters<typeof TextRun>[0]) {
 
 function rtlParagraph(opts: ConstructorParameters<typeof Paragraph>[0]) {
   return new Paragraph({ bidirectional: true, alignment: AlignmentType.RIGHT, ...(opts as object) } as ConstructorParameters<typeof Paragraph>[0]);
+}
+
+async function patchRtlSettings(buffer: Buffer): Promise<Buffer> {
+  const zip = await JSZip.loadAsync(buffer);
+
+  // Inject Hebrew language defaults into styles.xml
+  const stylesFile = zip.file("word/styles.xml");
+  if (stylesFile) {
+    const stylesXml = await stylesFile.async("string");
+    const patched = stylesXml.replace(
+      /<w:docDefaults>[\s\S]*?<\/w:docDefaults>/,
+      `<w:docDefaults><w:rPrDefault><w:rPr><w:lang w:val="he-IL" w:eastAsia="he-IL" w:bidi="he-IL"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:pPrDefault></w:docDefaults>`
+    );
+    zip.file("word/styles.xml", patched);
+  }
+
+  // Inject theme font language into settings.xml
+  const settingsFile = zip.file("word/settings.xml");
+  if (settingsFile) {
+    const settingsXml = await settingsFile.async("string");
+    const patched = settingsXml.replace(
+      "</w:settings>",
+      `<w:themeFontLang w:val="he-IL" w:bidi="he-IL"/></w:settings>`
+    );
+    zip.file("word/settings.xml", patched);
+  }
+
+  return zip.generateAsync({ type: "nodebuffer" });
 }
 
 export async function generateDvarDocx(
@@ -63,5 +92,6 @@ export async function generateDvarDocx(
     ],
   });
 
-  return Buffer.from(await Packer.toBuffer(doc));
+  const rawBuffer = Buffer.from(await Packer.toBuffer(doc));
+  return patchRtlSettings(rawBuffer);
 }
