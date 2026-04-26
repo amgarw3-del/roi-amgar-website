@@ -26,7 +26,7 @@ export async function generateDvarDocx(
     bidirectional: true,
     alignment: AlignmentType.RIGHT,
     spacing: { after: 160 },
-    children: [new TextRun({ text: "—".repeat(30), font: "Arial", size: 20 })],
+    children: [new TextRun({ text: "—".repeat(30), font: "Arial", size: 20, rightToLeft: true })],
   });
 
   const contentParagraphs = content
@@ -46,6 +46,14 @@ export async function generateDvarDocx(
     );
 
   const doc = new Document({
+    styles: {
+      default: {
+        document: {
+          run: { font: "Arial", size: 24, rightToLeft: true },
+          paragraph: { alignment: AlignmentType.RIGHT },
+        },
+      },
+    },
     sections: [
       {
         properties: { type: SectionType.CONTINUOUS },
