@@ -7,49 +7,50 @@ import {
   SectionType,
 } from "docx";
 
+const HE = { bidirectional: "he-IL" };
+
+function rtlRun(opts: ConstructorParameters<typeof TextRun>[0]) {
+  return new TextRun({ rightToLeft: true, language: HE, ...(opts as object) } as ConstructorParameters<typeof TextRun>[0]);
+}
+
+function rtlParagraph(opts: ConstructorParameters<typeof Paragraph>[0]) {
+  return new Paragraph({ bidirectional: true, alignment: AlignmentType.RIGHT, ...(opts as object) } as ConstructorParameters<typeof Paragraph>[0]);
+}
+
 export async function generateDvarDocx(
   title: string,
   content: string
 ): Promise<Buffer> {
-  const headerParagraph = new Paragraph({
-    bidirectional: true,
-    alignment: AlignmentType.RIGHT,
+  const headerParagraph = rtlParagraph({
     spacing: { after: 160 },
     children: [
-      new TextRun({ text: 'בס"ד', font: "Arial", size: 24, bold: true, rightToLeft: true }),
-      new TextRun({ text: "\t", font: "Arial", size: 24 }),
-      new TextRun({ text: `${title} / הרב רועי אמגר`, font: "Arial", size: 28, bold: true, underline: {}, rightToLeft: true }),
+      rtlRun({ text: 'בס"ד', font: "Arial", size: 24, bold: true }),
+      new TextRun({ text: "\t", font: "Arial", size: 24, rightToLeft: true }),
+      rtlRun({ text: `${title} / הרב רועי אמגר`, font: "Arial", size: 28, bold: true, underline: {} }),
     ],
   });
 
-  const divider = new Paragraph({
-    bidirectional: true,
-    alignment: AlignmentType.RIGHT,
+  const divider = rtlParagraph({
     spacing: { after: 160 },
-    children: [new TextRun({ text: "—".repeat(30), font: "Arial", size: 20, rightToLeft: true })],
+    children: [rtlRun({ text: "—".repeat(30), font: "Arial", size: 20 })],
   });
 
   const contentParagraphs = content
     .split(/\n+/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
-    .map(
-      (line) =>
-        new Paragraph({
-          bidirectional: true,
-          alignment: AlignmentType.RIGHT,
-          spacing: { after: 120, line: 320 },
-          children: [
-            new TextRun({ text: line, font: "Arial", size: 24, rightToLeft: true }),
-          ],
-        })
+    .map((line) =>
+      rtlParagraph({
+        spacing: { after: 120, line: 320 },
+        children: [rtlRun({ text: line, font: "Arial", size: 24 })],
+      })
     );
 
   const doc = new Document({
     styles: {
       default: {
         document: {
-          run: { font: "Arial", size: 24, rightToLeft: true },
+          run: { font: "Arial", size: 24, rightToLeft: true, language: HE },
           paragraph: { alignment: AlignmentType.RIGHT },
         },
       },
