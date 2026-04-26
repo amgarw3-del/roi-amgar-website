@@ -38,7 +38,7 @@ async function patchRtlSettings(buffer: Buffer): Promise<Buffer> {
     const settingsXml = await settingsFile.async("string");
     const patched = settingsXml.replace(
       "</w:settings>",
-      `<w:themeFontLang w:val="he-IL" w:bidi="he-IL"/></w:settings>`
+      `<w:themeFontLang w:val="he-IL" w:bidi="he-IL"/><w:bidi/></w:settings>`
     );
     zip.file("word/settings.xml", patched);
   }
