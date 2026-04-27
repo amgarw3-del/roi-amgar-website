@@ -182,8 +182,8 @@ export async function POST(req: NextRequest) {
 
         const genai = new GoogleGenerativeAI(apiKey);
         const model = genai.getGenerativeModel({
-          // gemini-2.0-flash has 1500 req/day free tier (vs 20 for gemini-2.5-flash)
-          model: "gemini-2.0-flash",
+          // gemini-2.5-flash-lite: 1000 req/day free tier — best fit for personal site
+          model: "gemini-2.5-flash-lite",
           systemInstruction: systemPrompt,
           generationConfig: {
             temperature: 0.5,
