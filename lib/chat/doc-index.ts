@@ -9,7 +9,7 @@
 
 import { client } from "@/sanity/client";
 import { extract, type IndexableDoc, type ExtractedDoc } from "./extract-text";
-import { fetchYouTubeVideos, type YouTubeVideo } from "@/lib/youtube";
+import { fetchAllChannelVideos, type YouTubeVideo } from "@/lib/youtube";
 
 export interface IndexedDoc {
   docId: string;
@@ -99,24 +99,15 @@ async function fetchSanity(): Promise<IndexedDoc[]> {
 }
 
 async function fetchYouTube(): Promise<IndexedDoc[]> {
-  // Skip if no API key — fetchYouTubeVideos returns [] in that case anyway.
   try {
-    const [long, medium, shorts] = await Promise.all([
-      fetchYouTubeVideos(50, "long"),
-      fetchYouTubeVideos(50, "medium"),
-      fetchYouTubeVideos(50, "short"),
-    ]);
-    const seen = new Set<string>();
+    const all = await fetchAllChannelVideos();
     const out: IndexedDoc[] = [];
-    for (const v of [...long, ...medium]) {
+    const seen = new Set<string>();
+    for (const v of all) {
       if (seen.has(v.videoId)) continue;
       seen.add(v.videoId);
+      // Without duration we can't tell shorts vs regular — label them all uniformly.
       out.push(fromYouTube(v, "youtube"));
-    }
-    for (const v of shorts) {
-      if (seen.has(v.videoId)) continue;
-      seen.add(v.videoId);
-      out.push(fromYouTube(v, "youtubeShort"));
     }
     return out;
   } catch (err) {
