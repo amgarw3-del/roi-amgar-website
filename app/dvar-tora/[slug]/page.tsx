@@ -22,8 +22,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DivarToraSlugPage({ params }: Props) {
   const { slug } = await params;
-  const item = await client.fetch(queries.divarToraBySlug(slug)).catch(() => null);
-  if (!item) notFound();
+  let item: any = null;
+  let debugErr: string | null = null;
+  try {
+    item = await client.fetch(queries.divarToraBySlug(slug));
+  } catch (e: any) {
+    debugErr = String(e?.message ?? e);
+  }
+  if (!item) {
+    return (
+      <div className="container py-10" style={{ direction: "ltr", whiteSpace: "pre-wrap" }}>
+        <h2>DEBUG — item not found for slug</h2>
+        <p><b>slug:</b> {JSON.stringify(slug)}</p>
+        <p><b>err:</b> {debugErr ?? "(none)"}</p>
+        <p><b>projectId:</b> {process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "MISSING"}</p>
+        <p><b>dataset:</b> {process.env.NEXT_PUBLIC_SANITY_DATASET ?? "(default)"}</p>
+        <p><b>hasToken:</b> {process.env.SANITY_API_TOKEN ? "yes" : "no"}</p>
+      </div>
+    );
+  }
 
   const date = item.publishedAt
     ? new Date(item.publishedAt).toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" })
