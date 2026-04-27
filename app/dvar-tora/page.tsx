@@ -1,8 +1,7 @@
 import { client, queries } from "@/sanity/client";
 import DivarToraCard from "@/components/DivarToraCard";
+import SubTopicSidebar from "@/components/SubTopicSidebar";
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
 export const revalidate = 3600;
 
@@ -11,16 +10,23 @@ export const metadata: Metadata = {
   description: "דברי תורה קצרים וממוקדים לשולחן שבת, לדרשה ולחיי היום יום — הרב רועי אמגר",
 };
 
-const topics = [
-  { slug: "parasha", label: "פרשת שבוע" },
-  { slug: "halacha", label: "הלכה" },
-  { slug: "emuna", label: "אמונה" },
-  { slug: "zugiyut", label: "זוגיות" },
-  { slug: "moadim", label: "מועדים" },
-];
+interface Props {
+  searchParams: Promise<{ sub?: string }>;
+}
 
-export default async function DivarToraPage() {
-  const items = await client.fetch(queries.latestDivarTora(24)).catch(() => []);
+export default async function DivarToraPage({ searchParams }: Props) {
+  const { sub } = await searchParams;
+
+  const [subTopics, items] = await Promise.all([
+    client.fetch(queries.allSubTopics).catch(() => []),
+    sub
+      ? client.fetch(queries.divarToraBySubTopic(sub, 24)).catch(() => [])
+      : client.fetch(queries.latestDivarTora(24)).catch(() => []),
+  ]);
+
+  // מציאת שם תת-הנושא הפעיל לכותרת
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const activeSubTopic = sub ? subTopics.find((st: any) => st.slug?.current === sub) : null;
 
   return (
     <>
@@ -31,46 +37,56 @@ export default async function DivarToraPage() {
         <div className="container text-center">
           <h1 className="text-3xl font-bold text-white mb-2">דברי תורה</h1>
           <p className="text-white/80">
-            דברי תורה קצרים וממוקדים — לשולחן שבת, לדרשה, ולחיי היום יום
+            {activeSubTopic
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ? `דברי תורה על: ${(activeSubTopic as any).hebrewName}`
+              : "דברי תורה קצרים וממוקדים — לשולחן שבת, לדרשה, ולחיי היום יום"}
           </p>
         </div>
       </section>
 
-      <div className="container py-10">
-        {/* סינון לפי נושא */}
-        <div className="flex flex-wrap gap-2 mb-8" style={{ direction: "rtl" }}>
-          <Link
-            href="/dvar-tora"
-            className="px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-colors"
-            style={{ background: "var(--color-primary)", color: "white", borderColor: "var(--color-primary)" }}
+      {/* Mobile: collapsible filter */}
+      <div className="md:hidden container pt-4">
+        <details className="border rounded-xl overflow-hidden">
+          <summary
+            className="px-4 py-3 font-semibold cursor-pointer select-none flex items-center justify-between"
+            style={{ color: "var(--color-primary)" }}
           >
-            הכל
-          </Link>
-          {topics.map((t) => (
-            <Link
-              key={t.slug}
-              href={`/dvar-tora?topic=${t.slug}`}
-              className="px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-colors"
-              style={{ background: "white", color: "var(--color-primary)", borderColor: "var(--color-primary)" }}
-            >
-              {t.label}
-            </Link>
-          ))}
-        </div>
+            <span>סינון לפי נושא{sub ? ` — ${activeSubTopic ? (activeSubTopic as any).hebrewName : sub}` : ""}</span>
+            <span className="text-xs text-gray-400">▼</span>
+          </summary>
+          <div className="px-4 pb-4 pt-2 max-h-72 overflow-y-auto">
+            <SubTopicSidebar subTopics={subTopics} activeSub={sub ?? null} />
+          </div>
+        </details>
+      </div>
 
-        {items.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {items.map((item: any) => (
-              <DivarToraCard key={item._id} {...item} />
-            ))}
+      <div className="container py-8">
+        <div className="flex gap-6" dir="rtl">
+          {/* Sidebar — right side (desktop only) */}
+          <aside className="hidden md:block flex-none w-52 self-start sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+            <SubTopicSidebar subTopics={subTopics} activeSub={sub ?? null} />
+          </aside>
+
+          {/* Cards */}
+          <div className="flex-1 min-w-0" dir="rtl">
+            {items.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {items.map((item: any) => (
+                  <DivarToraCard key={item._id} {...item} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 text-gray-400">
+                <p className="text-xl mb-2">
+                  {sub ? `אין עדיין דברי תורה על ${activeSubTopic ? (activeSubTopic as any).hebrewName : sub}` : "דברי תורה יתווספו בקרוב"}
+                </p>
+                <p className="text-sm">חזרו שוב בקרוב</p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="text-center py-20 text-gray-400">
-            <p className="text-xl mb-2">דברי תורה יתווספו בקרוב</p>
-            <p className="text-sm">חזרו שוב בקרוב</p>
-          </div>
-        )}
+        </div>
       </div>
     </>
   );
