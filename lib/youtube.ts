@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { decodeHTMLEntities } from "./decodeHtml";
 
 export interface YouTubeVideo {
@@ -10,8 +11,8 @@ export interface YouTubeVideo {
 
 const CHANNEL_ID = "UCpep2f42VluYwMqZ4kXiQTA";
 
-export async function fetchYouTubeVideos(
-  maxResults = 50,
+async function _fetchYouTubeVideos(
+  maxResults: number,
   videoDuration?: "short" | "medium" | "long"
 ): Promise<YouTubeVideo[]> {
   const key = process.env.YOUTUBE_API_KEY;
@@ -29,8 +30,7 @@ export async function fetchYouTubeVideos(
 
   try {
     const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?${params}`,
-      { cache: "no-store" }
+      `https://www.googleapis.com/youtube/v3/search?${params}`
     );
     if (!res.ok) return [];
     const data = await res.json();
@@ -57,3 +57,10 @@ export async function fetchYouTubeVideos(
     return [];
   }
 }
+
+// cache ל-24 שעות — קריאה אחת ביום לYouTube API
+export const fetchYouTubeVideos = unstable_cache(
+  _fetchYouTubeVideos,
+  ["youtube-videos"],
+  { revalidate: 86400 }
+);
