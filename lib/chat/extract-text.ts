@@ -16,6 +16,17 @@ function portableTextToPlain(blocks: PortableTextBlock[] | undefined): string {
     .join("\n\n");
 }
 
+interface CategoryRef {
+  hebrewName?: string;
+  slug?: { current?: string };
+}
+
+interface SubTopicRef {
+  hebrewName?: string;
+  slug?: { current?: string };
+  group?: string; // moed | parasha | fast | national
+}
+
 export interface IndexableDoc {
   _id: string;
   _type: string;
@@ -27,7 +38,9 @@ export interface IndexableDoc {
   status?: string;
   hidden?: boolean;
   isPublic?: boolean;
-  category?: { hebrewName?: string; slug?: { current?: string } } | null;
+  category?: CategoryRef | null;
+  extraCategories?: CategoryRef[];
+  subTopics?: SubTopicRef[];
   // type-specific
   summary?: string;
   transcript?: string;
@@ -44,6 +57,8 @@ export interface ExtractedDoc {
   slug: string;
   url: string;
   category?: string;
+  /** Joined Hebrew names of all categories (primary + extras) and sub-topics. */
+  topics: string[];
   publishedAt?: string;
   text: string;
 }
@@ -68,13 +83,33 @@ function urlFor(type: string, slug: string): string {
   }
 }
 
+const PARASHA_GROUP_LABEL: Record<string, string> = {
+  parasha: "פרשת",
+  moed: "מועד",
+  fast: "צום",
+  national: "יום לאומי",
+};
+
+function topicLabels(doc: IndexableDoc): string[] {
+  const out: string[] = [];
+  if (doc.category?.hebrewName) out.push(doc.category.hebrewName);
+  for (const c of doc.extraCategories ?? []) {
+    if (c?.hebrewName) out.push(c.hebrewName);
+  }
+  for (const st of doc.subTopics ?? []) {
+    if (!st?.hebrewName) continue;
+    const prefix = PARASHA_GROUP_LABEL[st.group ?? ""] ?? "";
+    out.push(prefix ? `${prefix} ${st.hebrewName}` : st.hebrewName);
+  }
+  return Array.from(new Set(out));
+}
+
 /** Returns null if the doc should NOT be indexed (unpublished, hidden, private). */
 export function extract(doc: IndexableDoc): ExtractedDoc | null {
   const type = doc._type;
   const slug = getSlug(doc);
   if (!slug) return null;
 
-  // Visibility filters per type
   if (type === "video") {
     if (doc.status !== "published" || doc.hidden) return null;
   } else if (type === "divarTora") {
@@ -82,7 +117,7 @@ export function extract(doc: IndexableDoc): ExtractedDoc | null {
   } else if (type === "qna") {
     if (!doc.isPublic) return null;
   } else if (type === "blogPost") {
-    // blogPost has no status field — index all
+    // no status field — index all
   } else {
     return null;
   }
@@ -104,6 +139,10 @@ export function extract(doc: IndexableDoc): ExtractedDoc | null {
     parts = [doc.question ?? "", doc.answer ?? ""];
   }
 
+  const topics = topicLabels(doc);
+  // Prepend topic labels to the body so retrieval/LLM see them.
+  if (topics.length) parts.unshift(`נושאים: ${topics.join(", ")}`);
+
   const text = parts
     .filter(Boolean)
     .join("\n\n")
@@ -119,6 +158,7 @@ export function extract(doc: IndexableDoc): ExtractedDoc | null {
     slug,
     url: urlFor(type, slug),
     category: doc.category?.hebrewName,
+    topics,
     publishedAt: doc.publishedAt,
     text,
   };

@@ -5,6 +5,7 @@ export interface ChatSource {
   typeLabel: string;
   category?: string;
   url: string;
+  external?: boolean;
 }
 
 export interface ChatMessage {

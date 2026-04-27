@@ -78,6 +78,7 @@ interface SourcePayload {
   typeLabel: string;
   category?: string;
   url: string;
+  external?: boolean;
 }
 
 function parseSourcesBlock(text: string, docs: IndexedDoc[]): {
@@ -108,6 +109,7 @@ function parseSourcesBlock(text: string, docs: IndexedDoc[]): {
       typeLabel: doc.typeLabel,
       category: doc.category,
       url: doc.url,
+      external: doc.external,
     });
   }
 
@@ -180,7 +182,8 @@ export async function POST(req: NextRequest) {
 
         const genai = new GoogleGenerativeAI(apiKey);
         const model = genai.getGenerativeModel({
-          model: "gemini-2.5-flash",
+          // gemini-2.0-flash has 1500 req/day free tier (vs 20 for gemini-2.5-flash)
+          model: "gemini-2.0-flash",
           systemInstruction: systemPrompt,
           generationConfig: {
             temperature: 0.5,
