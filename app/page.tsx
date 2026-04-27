@@ -11,7 +11,7 @@ import { fetchYouTubeVideos } from "@/lib/youtube";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export const revalidate = 86400; // ISR פעם ביום — 3 קריאות בלבד לYouTube API
+export const revalidate = 3600; // ISR כל שעה — נתוני YouTube נשמרים 24ש ב-unstable_cache
 
 const categories = [
   { href: "/parasha", label: "פרשת שבוע", emoji: "📖", desc: "שיעורים ודברי תורה לפרשה" },
