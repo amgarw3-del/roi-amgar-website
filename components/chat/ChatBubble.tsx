@@ -8,10 +8,8 @@ export default function ChatBubble() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Hide on admin/studio
   const hidden = pathname?.startsWith("/admin") || pathname?.startsWith("/studio");
 
-  // Close on Escape
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -29,11 +27,16 @@ export default function ChatBubble() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "סגור עוזר חיפוש" : "פתח עוזר חיפוש"}
         aria-expanded={open}
-        className={`fixed bottom-20 md:bottom-6 left-4 md:left-6 z-[55] w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 ${
-          open
-            ? "bg-slate-700 hover:bg-slate-800 scale-95"
-            : "bg-gradient-to-br from-amber-500 to-amber-700 hover:scale-105"
-        } text-white`}
+        className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-[55] w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 focus-visible:scale-105"
+        style={{
+          background: open
+            ? "var(--color-navy-deep)"
+            : "linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-deep) 100%)",
+          color: "var(--color-bg-paper)",
+          boxShadow:
+            "0 8px 22px rgba(15, 23, 41, 0.22), 0 2px 6px rgba(15, 23, 41, 0.12)",
+          border: "1.5px solid rgba(168, 106, 44, 0.35)",
+        }}
       >
         {open ? (
           <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
@@ -48,10 +51,23 @@ export default function ChatBubble() {
               strokeLinejoin="round"
               fill="none"
             />
-            <circle cx="8.5" cy="12" r="1" fill="currentColor" />
-            <circle cx="12" cy="12" r="1" fill="currentColor" />
-            <circle cx="15.5" cy="12" r="1" fill="currentColor" />
+            <path
+              d="M8 11.5h8M8 14h5"
+              stroke="var(--color-ochre-light)"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
           </svg>
+        )}
+        {!open && (
+          <span
+            className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+            style={{
+              background: "var(--color-ochre)",
+              boxShadow: "0 0 0 2px var(--color-bg-hero)",
+            }}
+            aria-hidden
+          />
         )}
       </button>
 
