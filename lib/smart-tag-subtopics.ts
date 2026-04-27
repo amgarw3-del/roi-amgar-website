@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ALL_SLUGS_FLAT, ALL_SUBTOPIC_SLUGS } from "./parasha-map";
+import { callGemini } from "./gemini";
 
 const SYSTEM = `אתה מומחה לתורה ומתמחה בשיוך דברי תורה לנושאים ספציפיים.
 
@@ -44,14 +44,7 @@ export async function smartTagSubtopics(
     let text: string;
 
     if (process.env.GEMINI_API_KEY) {
-      const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genai.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        systemInstruction: SYSTEM,
-        generationConfig: { responseMimeType: "application/json", maxOutputTokens: 200 },
-      });
-      const result = await model.generateContent(userMsg);
-      text = result.response.text();
+      text = await callGemini(SYSTEM, userMsg, { maxOutputTokens: 200 });
     } else {
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
       const response = await client.messages.create({

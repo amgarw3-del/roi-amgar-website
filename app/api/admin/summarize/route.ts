@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@sanity/client";
 import { STYLE_NOTES, STYLE_EXAMPLES } from "@/lib/dvar-tora-examples";
+import { callGemini } from "@/lib/gemini";
 
 const sanity = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
@@ -64,21 +64,6 @@ ${STYLE_NOTES}
 
 type AiOutput = { items?: Array<{ title: string; teaser: string; content: string; category?: string }> };
 
-async function callGemini(systemPrompt: string, userPrompt: string, maxTokens: number): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY!;
-  const genai = new GoogleGenerativeAI(apiKey);
-  const model = genai.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    systemInstruction: systemPrompt,
-    generationConfig: {
-      responseMimeType: "application/json",
-      maxOutputTokens: maxTokens,
-      temperature: 0.7,
-    },
-  });
-  const result = await model.generateContent(userPrompt);
-  return result.response.text();
-}
 
 async function callAnthropic(systemPrompt: string, userPrompt: string, maxTokens: number): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY!;
@@ -133,7 +118,7 @@ export async function POST(req: NextRequest) {
     let usedProvider = selected;
     try {
       if (selected === "gemini") {
-        raw = await callGemini(fullPrompt, userPrompt, maxTokens);
+        raw = await callGemini(fullPrompt, userPrompt, { maxOutputTokens: maxTokens });
       } else {
         raw = await callAnthropic(fullPrompt, userPrompt, maxTokens);
       }
@@ -145,7 +130,7 @@ export async function POST(req: NextRequest) {
       if (otherProvider) {
         console.warn(`[summarize] ${selected} failed, trying ${otherProvider}:`, primaryErr);
         raw = otherProvider === "gemini"
-          ? await callGemini(fullPrompt, userPrompt, maxTokens)
+          ? await callGemini(fullPrompt, userPrompt, { maxOutputTokens: maxTokens })
           : await callAnthropic(fullPrompt, userPrompt, maxTokens);
         usedProvider = otherProvider;
       } else {

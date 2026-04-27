@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import Anthropic from "@anthropic-ai/sdk";
+import { callGemini } from "@/lib/gemini";
 
 const SYSTEM = `אתה עוזר לרב רועי אמגר לכתוב תקציר קצר לדבר תורה.
 
@@ -19,14 +19,8 @@ export async function POST(req: NextRequest) {
     let teaser = "";
 
     if (process.env.GEMINI_API_KEY) {
-      const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genai.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        systemInstruction: SYSTEM,
-        generationConfig: { responseMimeType: "application/json", maxOutputTokens: 200, temperature: 0.7 },
-      });
-      const result = await model.generateContent(userPrompt);
-      const parsed = JSON.parse(result.response.text()) as { teaser?: string };
+      const raw = await callGemini(SYSTEM, userPrompt, { maxOutputTokens: 200 });
+      const parsed = JSON.parse(raw) as { teaser?: string };
       teaser = parsed.teaser ?? "";
     } else if (process.env.ANTHROPIC_API_KEY) {
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });

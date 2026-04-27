@@ -1,19 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { STYLE_EXAMPLES, STYLE_NOTES } from "./dvar-tora-examples";
 import { ALL_SLUGS_FLAT } from "./parasha-map";
 import { smartTagSubtopics } from "./smart-tag-subtopics";
-
-async function callGemini(system: string, user: string): Promise<string> {
-  const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  const model = genai.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    systemInstruction: system,
-    generationConfig: { responseMimeType: "application/json", maxOutputTokens: 4000, temperature: 0.7 },
-  });
-  const result = await model.generateContent(user);
-  return result.response.text();
-}
+import { callGemini } from "./gemini";
 
 async function callAnthropic(system: string, user: string): Promise<string> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -84,7 +73,7 @@ ${transcript.slice(0, 12000)}
 החזר מערך JSON: [{ title, teaser, content, category }, ...]`;
 
   const raw = process.env.GEMINI_API_KEY
-    ? await callGemini(SYSTEM_PROMPT, userMessage)
+    ? await callGemini(SYSTEM_PROMPT, userMessage, { maxOutputTokens: 4000 })
     : await callAnthropic(SYSTEM_PROMPT, userMessage);
 
   const text = raw.trim();
