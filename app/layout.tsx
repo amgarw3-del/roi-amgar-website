@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
-import { Heebo } from "next/font/google";
+import { Heebo, Frank_Ruhl_Libre } from "next/font/google";
 import "./globals.css";
-import BottomNav from "@/components/BottomNav";
-import Header from "@/components/Header";
-import AdminBar from "@/components/AdminBar";
+import SiteShell from "@/components/SiteShell";
+import { Analytics } from "@vercel/analytics/react";
 
 const heebo = Heebo({
   subsets: ["hebrew", "latin"],
   variable: "--font-heebo",
+  display: "swap",
+});
+
+const frankRuhl = Frank_Ruhl_Libre({
+  subsets: ["hebrew", "latin"],
+  weight: ["400", "500", "700", "900"],
+  variable: "--font-frank",
   display: "swap",
 });
 
@@ -40,12 +46,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" className={`${heebo.variable} h-full`}>
-      <body className="font-heebo min-h-full flex flex-col bg-white text-gray-900">
-        <AdminBar />
-        <Header />
-        <main className="flex-1 pb-20 md:pb-0">{children}</main>
-        <BottomNav />
+    <html
+      lang="he"
+      dir="rtl"
+      className={`${heebo.variable} ${frankRuhl.variable} h-full`}
+    >
+      <body className="font-heebo min-h-full flex flex-col">
+        <SiteShell>{children}</SiteShell>
+        <Analytics />
       </body>
     </html>
   );

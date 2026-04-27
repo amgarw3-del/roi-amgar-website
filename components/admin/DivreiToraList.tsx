@@ -356,15 +356,6 @@ function EditModal({ item, categories, subTopics, onClose, onSaved }: {
           />
         </div>
 
-        {/* תוכן */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-medium text-gray-600">תוכן *</label>
-            <span className="text-xs text-gray-400">{wordCount} מילים</span>
-          </div>
-          <MarkdownEditor value={content} onChange={setContent} rows={14} />
-        </div>
-
         {/* טיזר */}
         <div>
           <div className="flex items-center justify-between mb-1">
@@ -386,6 +377,15 @@ function EditModal({ item, categories, subTopics, onClose, onSaved }: {
             rows={2}
             className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
+        </div>
+
+        {/* תוכן */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium text-gray-600">תוכן *</label>
+            <span className="text-xs text-gray-400">{wordCount} מילים</span>
+          </div>
+          <MarkdownEditor value={content} onChange={setContent} rows={14} />
         </div>
 
         {/* קטגוריות */}

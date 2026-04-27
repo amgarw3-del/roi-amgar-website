@@ -24,12 +24,29 @@ export const divarToraSchema = defineType({
       title: "תוכן מלא",
       type: "text",
       rows: 10,
+      description:
+        "תומך ב-Markdown: **מודגש**, *מוטה*, > ציטוט (גופן פרנק רוהל). שורה ריקה = פסקה חדשה.",
     }),
     defineField({
       name: "category",
-      title: "נושא",
+      title: "נושא ראשי",
       type: "reference",
       to: [{ type: "category" }],
+    }),
+    defineField({
+      name: "extraCategories",
+      title: "נושאים נוספים",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "category" }] }],
+      validation: (rule) => rule.max(2),
+      description: "עד 2 נושאים נוספים (סך הכל עד 3)",
+    }),
+    defineField({
+      name: "subTopics",
+      title: "תתי-נושאים",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "subTopic" }] }],
+      description: "מועד / פרשה / צום / אירוע לאומי — אפשר לבחור כמה",
     }),
     defineField({
       name: "sourceType",
@@ -47,6 +64,7 @@ export const divarToraSchema = defineType({
     defineField({ name: "sourceVideoId", title: "מזהה סרטון מקור", type: "string" }),
     defineField({ name: "hebrewDate", title: "תאריך עברי", type: "string" }),
     defineField({ name: "publishedAt", title: "תאריך פרסום", type: "datetime" }),
+    defineField({ name: "emailedAt", title: "נשלח למייל בתאריך", type: "datetime" }),
     defineField({
       name: "status",
       title: "סטטוס",

@@ -75,6 +75,13 @@ export const videoSchema = defineType({
       initialValue: "draft",
     }),
     defineField({
+      name: "hidden",
+      title: "מוסתר מהאתר",
+      type: "boolean",
+      description: "הסרטון לא יוצג באתר אבל הסנכרון ימשיך",
+      initialValue: false,
+    }),
+    defineField({
       name: "contentTier",
       title: "רמת תוכן",
       type: "string",

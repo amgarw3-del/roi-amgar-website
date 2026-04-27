@@ -1,7 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ALL_SLUGS_FLAT, ALL_SUBTOPIC_SLUGS } from "./parasha-map";
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const SYSTEM = `אתה מומחה לתורה ומתמחה בשיוך דברי תורה לנושאים ספציפיים.
 
@@ -41,19 +40,29 @@ export async function smartTagSubtopics(
   content: string
 ): Promise<string[]> {
   try {
-    const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 200,
-      system: SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `כותרת: ${title}\n\nתוכן:\n${content.slice(0, 3000)}`,
-        },
-      ],
-    });
+    const userMsg = `כותרת: ${title}\n\nתוכן:\n${content.slice(0, 3000)}`;
+    let text: string;
 
-    const text = response.content.find((b) => b.type === "text")?.text ?? "[]";
+    if (process.env.GEMINI_API_KEY) {
+      const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genai.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: SYSTEM,
+        generationConfig: { responseMimeType: "application/json", maxOutputTokens: 200 },
+      });
+      const result = await model.generateContent(userMsg);
+      text = result.response.text();
+    } else {
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const response = await client.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 200,
+        system: SYSTEM,
+        messages: [{ role: "user", content: userMsg }],
+      });
+      text = response.content.find((b) => b.type === "text")?.text ?? "[]";
+    }
+
     const match = text.match(/\[[\s\S]*?\]/);
     if (!match) return [];
 

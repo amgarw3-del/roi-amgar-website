@@ -17,7 +17,13 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/api/admin")
   ) {
-    if (pathname === "/admin/login" || pathname === "/api/admin/auth") {
+    const publicAdminPaths = [
+      "/admin/login",
+      "/api/admin/auth",
+      "/api/admin/google-auth",
+      "/api/admin/google-callback",
+    ];
+    if (publicAdminPaths.some((p) => pathname.startsWith(p))) {
       return NextResponse.next();
     }
     const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;

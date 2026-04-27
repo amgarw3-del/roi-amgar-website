@@ -1,88 +1,186 @@
 import Link from "next/link";
-import { ArrowLeft, MessageCircleQuestion, BookOpen } from "lucide-react";
-
-const categories = [
-  { href: "/parasha", label: "פרשת שבוע", emoji: "📖" },
-  { href: "/halacha", label: "הלכה", emoji: "⚖️" },
-  { href: "/zugiyut", label: "זוגיות", emoji: "💑" },
-];
 
 export default function Hero() {
+  const serif = `'Frank Ruhl Libre', var(--font-frank), serif`;
+
   return (
     <section
-      className="relative overflow-hidden"
-      style={{ background: "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)" }}
+      style={{ background: "var(--color-bg-hero)", paddingTop: "80px", paddingBottom: "64px" }}
     >
-      {/* Background decoration */}
-      <div className="absolute inset-0 opacity-10">
-        <div
-          className="absolute top-10 left-10 w-64 h-64 rounded-full"
-          style={{ background: "var(--color-accent)" }}
-        />
-        <div
-          className="absolute bottom-0 right-20 w-48 h-48 rounded-full"
-          style={{ background: "var(--color-primary-dark)" }}
-        />
-      </div>
-
-      <div className="container relative py-16 md:py-24">
-        <div className="flex flex-col md:flex-row items-center gap-10">
-          {/* Text */}
-          <div className="flex-1 text-center md:text-right">
-<h1 className="text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
-              הרב רועי אמגר
-            </h1>
-            <p className="text-xl text-white/80 mb-8 max-w-lg leading-relaxed">
-              תורה לחיים, השראה תובנות כלים ושיעורים מתורת ישראל
+      <div className="container">
+        <div className="hero-grid">
+          {/* עמודה ימנית (ראשונה ב-RTL): טקסט */}
+          <div>
+            {/* Eyebrow */}
+            <p
+              style={{
+                fontSize: "13px",
+                color: "var(--color-ochre)",
+                letterSpacing: "0.2em",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                marginBottom: "20px",
+              }}
+            >
+              ◆ תורה לחיים
             </p>
 
-            <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-              <Link
-                href="/shiurim"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all hover:-translate-y-0.5"
-                style={{ background: "white", color: "var(--color-primary)" }}
+            {/* כותרת ראשית */}
+            <h1
+              style={{
+                lineHeight: 0.98,
+                marginBottom: "28px",
+                fontFamily: "var(--font-heebo)",
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "clamp(52px, 7vw, 92px)",
+                  fontWeight: 800,
+                  letterSpacing: "-0.025em",
+                  color: "var(--color-ink)",
+                }}
               >
-                <BookOpen size={18} />
-                לשיעורים
+                השראה,
+              </span>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "clamp(52px, 7vw, 92px)",
+                  fontWeight: 800,
+                  letterSpacing: "-0.025em",
+                  color: "var(--color-ink)",
+                }}
+              >
+                תובנות וכלים
+              </span>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "clamp(46px, 6.2vw, 82px)",
+                  fontWeight: 600,
+                  letterSpacing: "-0.02em",
+                  color: "var(--color-ochre)",
+                  fontFamily: serif,
+                  fontStyle: "italic",
+                }}
+              >
+                מתורת ישראל.
+              </span>
+            </h1>
+
+            {/* תיאור */}
+            <p
+              style={{
+                fontSize: "20px",
+                color: "var(--color-muted-cool)",
+                maxWidth: "520px",
+                lineHeight: 1.7,
+                marginBottom: "36px",
+              }}
+            >
+              שיעורים, הלכה, אמונה וזוגיות — תוכן מעמיק ומחיה ישירות מתורת ישראל
+            </p>
+
+            {/* CTAs */}
+            <div className="flex flex-wrap gap-4">
+              <Link href="/shiurim" className="btn-primary">
+                צפו בשיעורים ←
               </Link>
               <Link
                 href="/shaal"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold border-2 border-white text-white transition-all hover:bg-white/20"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  color: "var(--color-ink)",
+                  padding: "16px 4px",
+                  borderBottom: "1.5px solid var(--color-ink)",
+                }}
               >
-                <MessageCircleQuestion size={18} />
-                שאל את הרב
+                שאל את הרב →
               </Link>
-            </div>
-
-            {/* Quick category links */}
-            <div className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.href}
-                  href={cat.href}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 text-white hover:bg-white/25 transition-colors text-sm font-medium"
-                >
-                  <span>{cat.emoji}</span>
-                  {cat.label}
-                  <ArrowLeft size={14} />
-                </Link>
-              ))}
             </div>
           </div>
 
-          {/* Rabbi image */}
-          <div className="flex-shrink-0">
-            <div className="w-48 h-48 md:w-64 md:h-64 rounded-full border-4 border-white/30 overflow-hidden">
+          {/* עמודה שמאלית (שנייה ב-RTL): פורטרט */}
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                position: "relative",
+                aspectRatio: "4/5",
+                borderRadius: "24px",
+                overflow: "hidden",
+                maxWidth: "420px",
+                margin: "0 auto",
+              }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/rabbi.jpg"
                 alt="הרב רועי אמגר"
-                className="w-full h-full object-cover object-top"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "top center",
+                }}
               />
+            </div>
+
+            {/* Badge */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-12px",
+                right: "-12px",
+                background: "white",
+                borderRadius: "12px",
+                padding: "10px 16px",
+                boxShadow: "0 8px 24px rgba(15, 23, 41, 0.12)",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "13px",
+                fontWeight: 700,
+                color: "var(--color-navy)",
+                whiteSpace: "nowrap",
+                border: "1px solid var(--color-line-light)",
+              }}
+            >
+              <span
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "#22c55e",
+                  display: "inline-block",
+                  flexShrink: 0,
+                }}
+              />
+              שיעור חדש השבוע
             </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        .hero-grid {
+          display: flex;
+          flex-direction: column-reverse;
+          gap: 32px;
+        }
+        @media (min-width: 768px) {
+          .hero-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 80px;
+            align-items: center;
+          }
+        }
+      `}</style>
     </section>
   );
 }

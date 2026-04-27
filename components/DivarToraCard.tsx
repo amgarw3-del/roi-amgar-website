@@ -8,10 +8,15 @@ interface Props {
   teaser?: string;
   publishedAt?: string;
   category?: { hebrewName: string; slug: { current: string } };
+  extraCategories?: { hebrewName: string; slug: { current: string } }[];
   subTopics?: { hebrewName: string; slug: { current: string } }[];
 }
 
-export default function DivarToraCard({ title, slug, teaser, publishedAt, category, subTopics }: Props) {
+export default function DivarToraCard({ title, slug, teaser, publishedAt, category, extraCategories, subTopics }: Props) {
+  const allCategories = [
+    ...(category ? [category] : []),
+    ...(extraCategories ?? []),
+  ];
   const date = publishedAt
     ? new Date(publishedAt).toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" })
     : null;
@@ -26,8 +31,12 @@ export default function DivarToraCard({ title, slug, teaser, publishedAt, catego
           <BookOpen size={16} style={{ color: "var(--color-primary)" }} />
         </div>
         <div className="flex-1 min-w-0">
-          {category && (
-            <span className="badge text-xs mb-1 inline-block">{category.hebrewName}</span>
+          {allCategories.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1">
+              {allCategories.map((c) => (
+                <span key={c.slug.current} className="badge text-xs inline-block">{c.hebrewName}</span>
+              ))}
+            </div>
           )}
           <Link href={`/dvar-tora/${slug.current}`}>
             <h3

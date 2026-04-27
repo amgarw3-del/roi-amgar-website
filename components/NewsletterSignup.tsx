@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 export default function NewsletterSignup() {
   const [email, setEmail] = useState("");
@@ -12,38 +12,78 @@ export default function NewsletterSignup() {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
-    // TODO: connect to Mailchimp API
     await new Promise((r) => setTimeout(r, 800));
     setSubmitted(true);
     setLoading(false);
   }
 
   return (
-    <section style={{ background: "white" }} className="py-12">
+    <section style={{ background: "var(--color-bg-cream)", padding: "64px 0" }}>
       <div className="container">
-        <div className="max-w-xl mx-auto text-center">
+        <div
+          style={{
+            maxWidth: "600px",
+            margin: "0 auto",
+            border: "2px solid var(--color-ochre)",
+            borderRadius: "4px",
+            padding: "48px 40px",
+            position: "relative",
+            background: "var(--color-bg-paper)",
+          }}
+        >
+          {/* פינות זהב — ימין-עליון */}
           <div
-            className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: "var(--color-primary)" }}
-          >
-            <Mail size={22} className="text-white" />
+            style={{
+              position: "absolute",
+              top: "-6px",
+              right: "-6px",
+              width: "20px",
+              height: "20px",
+              borderTop: "3px solid var(--color-ochre)",
+              borderRight: "3px solid var(--color-ochre)",
+            }}
+          />
+          {/* פינת זהב — שמאל-עליון */}
+          <div
+            style={{
+              position: "absolute",
+              top: "-6px",
+              left: "-6px",
+              width: "20px",
+              height: "20px",
+              borderTop: "3px solid var(--color-ochre)",
+              borderLeft: "3px solid var(--color-ochre)",
+            }}
+          />
+
+          <div className="text-center" style={{ marginBottom: "32px" }}>
+            <h2
+              style={{
+                color: "var(--color-navy)",
+                fontSize: "24px",
+                fontWeight: 700,
+                marginBottom: "10px",
+              }}
+            >
+              פרשת השבוע ישירות למייל
+            </h2>
+            <p style={{ color: "var(--color-muted)", fontSize: "15px", lineHeight: 1.6 }}>
+              דבר תורה שבועי, שאלות ותשובות נבחרות ועדכונים על שיעורים חדשים
+            </p>
           </div>
-          <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--color-primary)" }}>
-            פרשת השבוע ישירות למייל
-          </h2>
-          <p className="text-gray-600 mb-6">
-            דבר תורה שבועי, שאלות ותשובות נבחרות ועדכונים על שיעורים חדשים
-          </p>
 
           {submitted ? (
-            <div className="flex items-center justify-center gap-2 text-green-700 font-semibold">
+            <div
+              className="flex items-center justify-center gap-2"
+              style={{ color: "#16a34a", fontWeight: 600, fontSize: "16px" }}
+            >
               <CheckCircle2 size={22} />
               נרשמת בהצלחה! תודה רבה
             </div>
           ) : (
             <form
               onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              style={{ display: "flex", direction: "rtl" }}
             >
               <input
                 type="email"
@@ -51,39 +91,43 @@ export default function NewsletterSignup() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="כתובת המייל שלך"
                 required
-                className="flex-1 px-4 py-3 rounded-full border-2 border-gray-200 focus:border-primary focus:outline-none text-right"
                 dir="rtl"
                 suppressHydrationWarning
+                style={{
+                  flex: 1,
+                  padding: "14px 18px",
+                  border: "1.5px solid var(--color-line)",
+                  borderLeft: "none",
+                  borderRadius: "0 4px 4px 0",
+                  fontSize: "15px",
+                  outline: "none",
+                  background: "white",
+                  color: "var(--color-ink-body)",
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-ochre)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary whitespace-nowrap"
                 suppressHydrationWarning
+                style={{
+                  padding: "14px 24px",
+                  background: "var(--color-navy)",
+                  color: "var(--color-bg-paper)",
+                  border: "none",
+                  borderRadius: "4px 0 0 4px",
+                  fontWeight: 700,
+                  fontSize: "15px",
+                  cursor: loading ? "wait" : "pointer",
+                  whiteSpace: "nowrap",
+                  transition: "background 0.2s",
+                }}
               >
-                {loading ? "נרשם..." : "הרשמה חינמית"}
+                {loading ? "..." : "הרשמה"}
               </button>
             </form>
           )}
-
-          <div className="mt-4 flex flex-wrap justify-center gap-4">
-            <a
-              href="https://wa.me/972XXXXXXXXX?text=הרשמה+לקבוצת+פרשת+שבוע"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm font-medium text-green-700 hover:text-green-800"
-            >
-              📱 קבוצת WhatsApp פרשת שבוע
-            </a>
-            <a
-              href="https://wa.me/972XXXXXXXXX?text=הרשמה+לעדכונים"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm font-medium text-green-700 hover:text-green-800"
-            >
-              🔔 עדכוני שיעורים חדשים
-            </a>
-          </div>
         </div>
       </div>
     </section>

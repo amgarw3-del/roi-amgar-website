@@ -21,7 +21,7 @@ export function urlFor(source: SanityImageSource) {
 export const queries = {
   // שיעורים אחרונים
   latestVideos: (limit = 6) =>
-    `*[_type == "video" && status == "published"] | order(publishedAt desc) [0...${limit}] {
+    `*[_type == "video" && status == "published" && hidden != true] | order(publishedAt desc) [0...${limit}] {
       _id, title, slug, category->{hebrewName, slug}, summary, publishedAt, youtubeId, platform, level
     }`,
 
@@ -39,13 +39,13 @@ export const queries = {
 
   // לפי קטגוריה
   byCategory: (categorySlug: string, type: string, limit = 12) =>
-    `*[_type == "${type}" && category->slug.current == "${categorySlug}" && status == "published"] | order(publishedAt desc) [0...${limit}] {
+    `*[_type == "${type}" && category->slug.current == "${categorySlug}" && status == "published" && (hidden != true || _type != "video")] | order(publishedAt desc) [0...${limit}] {
       _id, title, slug, summary, publishedAt, youtubeId, level
     }`,
 
   // שיעור בודד
   videoBySlug: (slug: string) =>
-    `*[_type == "video" && slug.current == "${slug}"][0] {
+    `*[_type == "video" && slug.current == "${slug}" && hidden != true][0] {
       _id, title, slug, category->{hebrewName, slug}, summary, transcript, publishedAt, youtubeId, platform, level, hebrewDate
     }`,
 
@@ -70,7 +70,7 @@ export const queries = {
         title match "${query}*" ||
         summary match "${query}*" ||
         question match "${query}*"
-      )
+      ) && (_type != "video" || hidden != true)
     ] | order(_score desc) [0...20] {
       _id, _type, title, question, slug, category->{hebrewName, slug}, publishedAt
     }`,
@@ -83,20 +83,43 @@ export const queries = {
   // דברי תורה אחרונים
   latestDivarTora: (limit = 6) =>
     `*[_type == "divarTora" && status == "published"] | order(publishedAt desc) [0...${limit}] {
-      _id, title, slug, teaser, category->{hebrewName, slug}, publishedAt
+      _id, title, slug, teaser, category->{hebrewName, slug}, publishedAt,
+      extraCategories[]->{hebrewName, slug},
+      subTopics[]->{hebrewName, slug}
     }`,
 
-  // דברי תורה לפי קטגוריה
+  // דברי תורה לפי קטגוריה (כולל extraCategories)
   divarToraByCategory: (categorySlug: string, limit = 12) =>
-    `*[_type == "divarTora" && status == "published" && category->slug.current == "${categorySlug}"] | order(publishedAt desc) [0...${limit}] {
-      _id, title, slug, teaser, publishedAt
+    `*[_type == "divarTora" && status == "published" && (
+      category->slug.current == "${categorySlug}" ||
+      "${categorySlug}" in extraCategories[]->slug.current
+    )] | order(publishedAt desc) [0...${limit}] {
+      _id, title, slug, teaser, publishedAt,
+      category->{hebrewName, slug},
+      extraCategories[]->{hebrewName, slug},
+      subTopics[]->{hebrewName, slug}
     }`,
 
   // דבר תורה בודד
   divarToraBySlug: (slug: string) =>
     `*[_type == "divarTora" && slug.current == "${slug}" && status == "published"][0] {
-      _id, title, slug, teaser, content, category->{hebrewName, slug}, publishedAt, hebrewDate, sourceType
+      _id, title, slug, teaser, content, category->{hebrewName, slug}, publishedAt, hebrewDate, sourceType,
+      extraCategories[]->{hebrewName, slug},
+      subTopics[]->{hebrewName, slug}
     }`,
+
+  // דברי תורה לפי תת-נושא
+  divarToraBySubTopic: (subTopicSlug: string, limit = 24) =>
+    `*[_type == "divarTora" && status == "published" && "${subTopicSlug}" in subTopics[]->slug.current] | order(publishedAt desc) [0...${limit}] {
+      _id, title, slug, teaser, publishedAt, category->{hebrewName, slug},
+      extraCategories[]->{hebrewName, slug},
+      subTopics[]->{hebrewName, slug}
+    }`,
+
+  // כל תתי-הנושאים לסרגל
+  allSubTopics: `*[_type == "subTopic"] | order(group asc, order asc) {
+    _id, hebrewName, slug, group
+  }`,
 
   // סטטוס סריקה (לאוטומציה)
   scanStatus: `*[_type == "scanStatus"][0] {

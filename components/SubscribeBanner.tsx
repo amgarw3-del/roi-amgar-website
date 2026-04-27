@@ -30,9 +30,9 @@ export default function SubscribeBanner() {
       <div className="container">
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* טקסט */}
-          <div className="text-white text-center md:text-right flex-shrink-0">
-            <h3 className="text-xl font-bold mb-1">הצטרפו לרשימת הדיוור</h3>
-            <p className="text-white/70 text-sm">קבלו עדכונים ושיעורים ישירות אליכם</p>
+          <div className="text-center md:text-right flex-shrink-0" style={{ color: "white" }}>
+            <h3 className="text-xl font-bold mb-1" style={{ color: "white" }}>הצטרפו לרשימת הדיוור</h3>
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>קבלו עדכונים ושיעורים ישירות אליכם</p>
           </div>
 
           {/* טופס */}

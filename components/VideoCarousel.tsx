@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import Image from "next/image";
 import type { YouTubeVideo } from "@/lib/youtube";
 import { decodeHTMLEntities } from "@/lib/decodeHtml";
 
@@ -19,9 +18,10 @@ interface Props {
   videos: YouTubeVideo[];
   title: string;
   isShorts?: boolean;
+  dark?: boolean;
 }
 
-export default function VideoCarousel({ videos, title, isShorts = false }: Props) {
+export default function VideoCarousel({ videos, title, isShorts = false, dark = false }: Props) {
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("");
   const trackRef = useRef<HTMLDivElement>(null);
@@ -30,7 +30,16 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
   const scrollLeft = useRef(0);
   const dragMoved = useRef(false);
 
-  const CARD_W = isShorts ? 176 : 276; // card width + gap
+  const CARD_W = isShorts ? 176 : 276;
+
+  const titleColor = dark ? "var(--color-bg-paper)" : "var(--color-navy)";
+  const videoTitleColor = dark ? "rgba(250,243,226,0.9)" : "var(--color-navy)";
+  const activeTabStyle = dark
+    ? { background: "var(--color-ochre-light)", color: "var(--color-navy-deep)", borderColor: "var(--color-ochre-light)" }
+    : { background: "var(--color-navy)", color: "white", borderColor: "var(--color-navy)" };
+  const inactiveTabStyle = dark
+    ? { background: "transparent", color: "rgba(250,243,226,0.8)", borderColor: "rgba(250,243,226,0.3)" }
+    : { background: "white", color: "var(--color-navy)", borderColor: "var(--color-navy)" };
 
   const filtered = videos.filter((v) => {
     if (EXCLUDE_TITLES.some((ex) => v.title.includes(ex))) return false;
@@ -38,28 +47,22 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
     return true;
   });
 
-  // גלילה עם לולאה
   const scrollTo = useCallback((dir: "next" | "prev") => {
     const track = trackRef.current;
     if (!track) return;
     const totalWidth = track.scrollWidth;
     const visibleWidth = track.clientWidth;
-    // בגלל RTL, scrollLeft יכול להיות שלילי בחלק מהדפדפנים
     const currentScroll = Math.abs(track.scrollLeft);
 
     if (dir === "next") {
-      // הזזה שמאלה (סרטון הבא ב-RTL)
       const newScroll = currentScroll + CARD_W;
       if (newScroll + visibleWidth >= totalWidth - 10) {
-        // הגענו לסוף — חזור להתחלה
         track.scrollTo({ left: 0, behavior: "smooth" });
       } else {
         track.scrollBy({ left: -(CARD_W), behavior: "smooth" });
       }
     } else {
-      // הזזה ימינה
       if (currentScroll <= 10) {
-        // בהתחלה — קפוץ לסוף
         track.scrollTo({ left: -(totalWidth - visibleWidth), behavior: "smooth" });
       } else {
         track.scrollBy({ left: CARD_W, behavior: "smooth" });
@@ -67,7 +70,6 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
     }
   }, [CARD_W]);
 
-  // Mouse drag
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     const track = trackRef.current;
     if (!track) return;
@@ -98,7 +100,6 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
     if (track) track.style.cursor = "grab";
   }, []);
 
-  // Escape key לסגירת מודאל
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setActiveVideo(null); };
     window.addEventListener("keydown", onKey);
@@ -111,8 +112,8 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
     <div className="relative">
       {/* כותרת */}
       <div className="mb-4 px-1">
-        <h2 className="text-2xl font-bold" style={{ color: "var(--color-primary)" }}>{title}</h2>
-        <div className="divider" />
+        <h2 className="text-2xl font-bold" style={{ color: titleColor }}>{title}</h2>
+        <div className="divider" style={{ background: "var(--color-ochre)" }} />
       </div>
 
       {/* טאבי קטגוריות */}
@@ -123,10 +124,7 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
               key={cat.key}
               onClick={() => setActiveFilter(cat.key)}
               className="px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-colors"
-              style={activeFilter === cat.key
-                ? { background: "var(--color-primary)", color: "white", borderColor: "var(--color-primary)" }
-                : { background: "white", color: "var(--color-primary)", borderColor: "var(--color-primary)" }
-              }
+              style={activeFilter === cat.key ? activeTabStyle : inactiveTabStyle}
             >
               {cat.label}
             </button>
@@ -134,9 +132,8 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
         </div>
       )}
 
-      {/* עטיפת הקרוסל עם חצים בצדדים */}
+      {/* קרוסל עם חצים */}
       <div className="relative group">
-        {/* חץ ימין (הקודם ב-RTL) */}
         <button
           onClick={() => scrollTo("prev")}
           aria-label="הקודם"
@@ -146,7 +143,6 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
 
-        {/* חץ שמאל (הבא ב-RTL) */}
         <button
           onClick={() => scrollTo("next")}
           aria-label="הבא"
@@ -156,7 +152,6 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
 
-        {/* מסלול */}
         <div
           ref={trackRef}
           className="flex gap-4 overflow-x-auto pb-3 select-none"
@@ -173,7 +168,9 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
           onMouseLeave={onMouseUp}
         >
           {filtered.length === 0 ? (
-            <p className="text-gray-400 py-8 w-full text-center">אין סרטונים בקטגוריה זו</p>
+            <p style={{ color: dark ? "rgba(250,243,226,0.5)" : "#9ca3af" }} className="py-8 w-full text-center">
+              אין סרטונים בקטגוריה זו
+            </p>
           ) : filtered.map((v) => (
             <button
               key={v.videoId}
@@ -181,7 +178,10 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
               className="group/card flex-shrink-0 text-right"
               style={{ scrollSnapAlign: "start", width: isShorts ? "160px" : "260px", cursor: "inherit" }}
             >
-              <div className="relative overflow-hidden rounded-xl mb-2" style={{ aspectRatio: isShorts ? "9/16" : "16/9" }}>
+              <div
+                className="relative overflow-hidden rounded-xl mb-2"
+                style={{ aspectRatio: isShorts ? "9/16" : "16/9" }}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={v.thumbnail}
@@ -191,14 +191,21 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
                 />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/card:bg-black/40 transition-colors">
                   <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover/card:scale-110 transition-transform">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF0000"><polygon points="5,3 19,12 5,21"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF0000">
+                      <polygon points="5,3 19,12 5,21"/>
+                    </svg>
                   </div>
                 </div>
                 {isShorts && (
-                  <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded-full font-bold">Shorts</div>
+                  <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                    Shorts
+                  </div>
                 )}
               </div>
-              <p className="text-sm font-semibold leading-snug line-clamp-2" style={{ color: "var(--color-primary)", direction: "rtl" }}>
+              <p
+                className="text-sm font-semibold leading-snug line-clamp-2"
+                style={{ color: videoTitleColor, direction: "rtl" }}
+              >
                 {decodeHTMLEntities(v.title)}
               </p>
             </button>
@@ -212,7 +219,6 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
           className="fixed inset-0 z-50 bg-black/80"
           onClick={() => setActiveVideo(null)}
         >
-          {/* כפתור סגירה */}
           <button
             onClick={() => setActiveVideo(null)}
             className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 transition-colors flex items-center justify-center text-white text-xl"
@@ -220,7 +226,6 @@ export default function VideoCarousel({ videos, title, isShorts = false }: Props
           >
             ✕
           </button>
-          {/* נגן — stopPropagation רק על ה-iframe עצמו */}
           <div
             className="absolute inset-0 flex items-center justify-center p-4"
             style={{ pointerEvents: "none" }}

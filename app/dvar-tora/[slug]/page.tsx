@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Download } from "lucide-react";
+import DivarToraContent from "@/components/DivarToraContent";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -86,9 +87,7 @@ export default async function DivarToraSlugPage({ params }: Props) {
       )}
 
       {/* תוכן */}
-      <div className="prose-hebrew whitespace-pre-line leading-loose text-gray-800">
-        {item.content}
-      </div>
+      <DivarToraContent content={item.content ?? ""} />
 
       {/* שיתוף */}
       <div className="mt-10 pt-6 border-t border-gray-100 flex items-center gap-3">

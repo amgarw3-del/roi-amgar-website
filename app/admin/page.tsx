@@ -1,10 +1,6 @@
 import { createClient } from "@sanity/client";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
-import AdminActions from "@/components/AdminActions";
-import AdminCreateForm from "@/components/AdminCreateForm";
-import AdminLogout from "@/components/AdminLogout";
-import AdminRetag from "@/components/AdminRetag";
+import { Video, BookOpen, HelpCircle, RefreshCw, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -16,100 +12,143 @@ const sanity = createClient({
   useCdn: false,
 });
 
-interface DivarItem { _id: string; title: string; _createdAt: string; status: string }
-interface VideoItem { _id: string; title: string; publishedAt: string }
-
-export default async function AdminPage() {
-  const [drafts, published, videos] = await Promise.all([
-    sanity.fetch<DivarItem[]>(
-      `*[_type == "divarTora" && status == "draft"] | order(_createdAt desc) [0...50] { _id, title, _createdAt, status }`
-    ),
-    sanity.fetch<DivarItem[]>(
-      `*[_type == "divarTora" && status == "published"] | order(publishedAt desc) [0...40] { _id, title, publishedAt, status }`
-    ),
-    sanity.fetch<VideoItem[]>(
-      `*[_type == "video"] | order(publishedAt desc) [0...40] { _id, title, publishedAt }`
-    ),
+export default async function AdminDashboard() {
+  const [videoStats, divarStats, qnaStats] = await Promise.all([
+    sanity.fetch<{ total: number; pending: number; hidden: number }>(`{
+      "total": count(*[_type == "video"]),
+      "pending": count(*[_type == "video" && status == "draft" && hidden != true]),
+      "hidden": count(*[_type == "video" && hidden == true])
+    }`),
+    sanity.fetch<{ total: number; drafts: number }>(`{
+      "total": count(*[_type == "divarTora" && status == "published"]),
+      "drafts": count(*[_type == "divarTora" && status == "draft"])
+    }`),
+    sanity.fetch<{ unanswered: number; total: number }>(`{
+      "unanswered": count(*[_type == "qna" && !defined(answer)]),
+      "total": count(*[_type == "qna"])
+    }`),
   ]);
 
+  const kpis = [
+    {
+      label: "סרטונים",
+      value: videoStats.total,
+      sub: videoStats.pending > 0 ? `${videoStats.pending} ממתינים לאישור` : "הכל מעודכן",
+      warn: videoStats.pending > 0,
+      href: "/admin/content/videos",
+      icon: Video,
+    },
+    {
+      label: "דברי תורה",
+      value: divarStats.total,
+      sub: divarStats.drafts > 0 ? `${divarStats.drafts} טיוטות` : "הכל פורסם",
+      warn: divarStats.drafts > 0,
+      href: "/admin/content/divrei-tora",
+      icon: BookOpen,
+    },
+    {
+      label: "שאלות",
+      value: qnaStats.total,
+      sub: qnaStats.unanswered > 0 ? `${qnaStats.unanswered} ללא תשובה` : "הכל נענה",
+      warn: qnaStats.unanswered > 0,
+      href: "/admin/content/qna",
+      icon: HelpCircle,
+    },
+  ];
+
   return (
-    <div className="container py-10 max-w-3xl" dir="rtl">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: "var(--color-primary)" }}>
-          לוח מנהל
-        </h1>
-        <div className="flex gap-3">
+    <div>
+      <h1 className="text-xl font-bold mb-6" style={{ color: "var(--color-primary)" }}>
+        שלום! מה עושים היום?
+      </h1>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {kpis.map(({ label, value, sub, warn, href, icon: Icon }) => (
           <Link
-            href="/studio"
-            target="_blank"
-            className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold transition-opacity hover:opacity-80"
-            style={{ background: "var(--color-warm)", color: "var(--color-primary)" }}
+            key={href}
+            href={href}
+            className="card px-5 py-4 hover:shadow-md transition-shadow"
           >
-            <ExternalLink size={14} />
-            פתח Studio
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-500">{label}</span>
+              <Icon size={18} style={{ color: "var(--color-primary)" }} />
+            </div>
+            <p className="text-3xl font-bold mb-1" style={{ color: "var(--color-primary)" }}>
+              {value}
+            </p>
+            <p className={`text-xs font-medium ${warn ? "text-amber-600" : "text-gray-400"}`}>
+              {sub}
+            </p>
           </Link>
-          <AdminLogout />
-        </div>
+        ))}
       </div>
 
-      {/* יצירה */}
-      <section className="mb-10">
-        <AdminCreateForm />
-      </section>
-
-      {/* שיוך חכם */}
-      <section className="mb-10">
-        <AdminRetag />
-      </section>
-
-      {/* טיוטות */}
-      <section className="mb-10">
-        <h2 className="text-lg font-bold mb-4" style={{ color: "var(--color-primary)" }}>
-          טיוטות ממתינות ({drafts.length})
-        </h2>
-        {drafts.length === 0 ? (
-          <p className="text-gray-400 text-sm">אין טיוטות כרגע</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {drafts.map((item) => (
-              <div key={item._id} className="card px-4 py-3 flex items-center justify-between gap-3">
-                <span className="font-semibold text-sm flex-1 truncate">{item.title}</span>
-                <AdminActions _id={item._id} canPublish />
-              </div>
-            ))}
+      {/* פעולות מהירות */}
+      <h2 className="font-bold mb-4 text-gray-600">פעולות מהירות</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+        <Link
+          href="/admin/content/divrei-tora"
+          className="card px-5 py-4 hover:shadow-md transition-shadow flex items-center gap-3"
+          style={{ borderRight: "3px solid var(--color-accent)" }}
+        >
+          <BookOpen size={20} style={{ color: "var(--color-accent)" }} />
+          <div>
+            <p className="font-semibold text-sm">דבר תורה חדש</p>
+            <p className="text-xs text-gray-400">כתוב או הדבק חומר גלם → AI יסכם</p>
           </div>
-        )}
-      </section>
+        </Link>
 
-      {/* דברי תורה מפורסמים */}
-      <section className="mb-10">
-        <h2 className="text-lg font-bold mb-4" style={{ color: "var(--color-primary)" }}>
-          דברי תורה מפורסמים ({published.length})
-        </h2>
-        <div className="flex flex-col gap-2">
-          {published.map((item) => (
-            <div key={item._id} className="card px-4 py-3 flex items-center justify-between gap-3">
-              <span className="font-semibold text-sm flex-1 truncate">{item.title}</span>
-              <AdminActions _id={item._id} />
-            </div>
-          ))}
-        </div>
-      </section>
+        <Link
+          href="/admin/content/videos"
+          className="card px-5 py-4 hover:shadow-md transition-shadow flex items-center gap-3"
+          style={{ borderRight: "3px solid var(--color-primary)" }}
+        >
+          <Video size={20} style={{ color: "var(--color-primary)" }} />
+          <div>
+            <p className="font-semibold text-sm">אשר סרטונים</p>
+            <p className="text-xs text-gray-400">סקור ופרסם סרטונים חדשים מיוטיוב</p>
+          </div>
+        </Link>
 
-      {/* שיעורים */}
-      <section>
-        <h2 className="text-lg font-bold mb-4" style={{ color: "var(--color-primary)" }}>
-          שיעורים ({videos.length})
-        </h2>
-        <div className="flex flex-col gap-2">
-          {videos.map((item) => (
-            <div key={item._id} className="card px-4 py-3 flex items-center justify-between gap-3">
-              <span className="font-semibold text-sm flex-1 truncate">{item.title}</span>
-              <AdminActions _id={item._id} />
-            </div>
-          ))}
+        <Link
+          href="/admin/content/qna"
+          className="card px-5 py-4 hover:shadow-md transition-shadow flex items-center gap-3"
+          style={{ borderRight: "3px solid #ef4444" }}
+        >
+          <HelpCircle size={20} className="text-red-400" />
+          <div>
+            <p className="font-semibold text-sm">ענה לשאלות</p>
+            <p className="text-xs text-gray-400">
+              {qnaStats.unanswered > 0 ? `${qnaStats.unanswered} שאלות מחכות` : "אין שאלות פתוחות"}
+            </p>
+          </div>
+        </Link>
+
+        <a
+          href={`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="card px-5 py-4 hover:shadow-md transition-shadow flex items-center gap-3"
+          style={{ borderRight: "3px solid #6b7280" }}
+        >
+          <ExternalLink size={20} className="text-gray-400" />
+          <div>
+            <p className="font-semibold text-sm">פתח את האתר</p>
+            <p className="text-xs text-gray-400">ראה איך האתר נראה</p>
+          </div>
+        </a>
+      </div>
+
+      {/* מצב סנכרון */}
+      {videoStats.hidden > 0 && (
+        <div className="card px-5 py-3 flex items-center gap-3">
+          <RefreshCw size={16} className="text-gray-400 shrink-0" />
+          <p className="text-sm text-gray-500">
+            {videoStats.hidden} סרטונים מוסתרים מהאתר — הסנכרון ממשיך אוטומטית
+          </p>
         </div>
-      </section>
+      )}
     </div>
   );
 }

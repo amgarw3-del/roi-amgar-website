@@ -7,6 +7,7 @@ import {
   SectionType,
 } from "docx";
 import * as JSZip from "jszip";
+import { parseMarkdownContent } from "./markdown-utils";
 
 const HE = { bidirectional: "he-IL" };
 
@@ -91,16 +92,22 @@ export async function generateDvarDocx(
     children: [rtlRun({ text: "—".repeat(30), font: "Arial", size: 20 })],
   });
 
-  const contentParagraphs = content
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map((line) =>
-      rtlParagraph({
-        spacing: { after: 120, line: 320 },
-        children: [rtlRun({ text: line, font: "Arial", size: 24 })],
+  const contentParagraphs = parseMarkdownContent(content).map((p) => {
+    const children = p.runs.map((r) =>
+      rtlRun({
+        text: r.text,
+        font: p.kind === "quote" ? "David" : "Arial",
+        size: p.kind === "quote" ? 26 : 24,
+        bold: r.bold,
+        italics: r.italic,
       })
     );
+    return rtlParagraph({
+      spacing: { after: p.kind === "quote" ? 200 : 120, line: 360 },
+      indent: p.kind === "quote" ? { right: 360 } : undefined,
+      children,
+    });
+  });
 
   const doc = new Document({
     styles: {

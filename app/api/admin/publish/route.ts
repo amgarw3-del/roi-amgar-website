@@ -5,9 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
-  const { _id } = body as { _id?: string };
+  const { _id, id } = body as { _id?: string; id?: string };
+  const docId = _id ?? id;
 
-  if (!_id) {
+  if (!docId) {
     return NextResponse.json({ error: "חסר מזהה" }, { status: 400 });
   }
 
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   });
 
   await sanity
-    .patch(_id)
+    .patch(docId!)
     .set({ status: "published", publishedAt: new Date().toISOString() })
     .commit();
 

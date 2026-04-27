@@ -1,11 +1,13 @@
 import nodemailer from "nodemailer";
+import { markdownToHtml } from "./markdown-utils";
 
-interface DvarToraEmail {
+export interface DvarToraEmail {
   title: string;
   teaser: string;
   content: string;
   category: string;
   sourceVideoTitle?: string;
+  approveUrl?: string;
 }
 
 export async function sendDvarToraForApproval(items: DvarToraEmail[]) {
@@ -27,8 +29,13 @@ export async function sendDvarToraForApproval(items: DvarToraEmail[]) {
         <h2 style="color:#06415D;margin-top:0">${i + 1}. ${d.title}</h2>
         <p style="color:#C8956A;font-style:italic">${d.teaser}</p>
         <hr style="border-color:#eee"/>
-        <div style="white-space:pre-wrap;line-height:1.7">${d.content}</div>
+        <div style="line-height:1.7">${markdownToHtml(d.content)}</div>
         <p style="color:#999;font-size:12px;margin-top:16px">קטגוריה: ${d.category}${d.sourceVideoTitle ? ` | מקור: ${d.sourceVideoTitle}` : ""}</p>
+        ${d.approveUrl ? `<div style="text-align:center;margin-top:12px">
+          <a href="${d.approveUrl}" style="background:#2e7d32;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:14px">
+            ✅ פרסם עכשיו
+          </a>
+        </div>` : ""}
       </div>`
     )
     .join("");
