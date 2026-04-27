@@ -115,27 +115,11 @@ export async function POST(req: NextRequest) {
     const maxTokens = Math.min(8000, 2000 * requestedCount);
 
     let raw = "";
-    let usedProvider = selected;
-    try {
-      if (selected === "gemini") {
-        raw = await callGemini(fullPrompt, userPrompt, { maxOutputTokens: maxTokens });
-      } else {
-        raw = await callAnthropic(fullPrompt, userPrompt, maxTokens);
-      }
-    } catch (primaryErr) {
-      // נסה fallback אם יש
-      const otherProvider = selected === "gemini" && hasAnthropic ? "anthropic"
-                          : selected === "anthropic" && hasGemini ? "gemini"
-                          : null;
-      if (otherProvider) {
-        console.warn(`[summarize] ${selected} failed, trying ${otherProvider}:`, primaryErr);
-        raw = otherProvider === "gemini"
-          ? await callGemini(fullPrompt, userPrompt, { maxOutputTokens: maxTokens })
-          : await callAnthropic(fullPrompt, userPrompt, maxTokens);
-        usedProvider = otherProvider;
-      } else {
-        throw primaryErr;
-      }
+    const usedProvider = selected;
+    if (selected === "gemini") {
+      raw = await callGemini(fullPrompt, userPrompt, { maxOutputTokens: maxTokens });
+    } else {
+      raw = await callAnthropic(fullPrompt, userPrompt, maxTokens);
     }
 
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
