@@ -56,8 +56,11 @@ export default async function LecturesPage() {
             ◆ הרצאות הרב רועי אמגר
           </div>
           <h1
-            className="text-white text-3xl md:text-5xl font-bold mb-4 leading-tight"
-            style={{ fontFamily: "'Frank Ruhl Libre', var(--font-frank), serif" }}
+            className="text-3xl md:text-5xl font-bold mb-4 leading-tight"
+            style={{
+              fontFamily: "'Frank Ruhl Libre', var(--font-frank), serif",
+              color: "var(--color-bg-paper)",
+            }}
           >
             הרצאה שתישאר בלב הקהילה
           </h1>
@@ -213,8 +216,11 @@ export default async function LecturesPage() {
       >
         <div className="container text-center">
           <h2
-            className="text-white text-2xl md:text-3xl font-bold mb-4"
-            style={{ fontFamily: "'Frank Ruhl Libre', var(--font-frank), serif" }}
+            className="text-2xl md:text-3xl font-bold mb-4"
+            style={{
+              fontFamily: "'Frank Ruhl Libre', var(--font-frank), serif",
+              color: "var(--color-bg-paper)",
+            }}
           >
             רוצים להזמין הרצאה?
           </h2>
