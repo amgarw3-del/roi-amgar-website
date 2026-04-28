@@ -14,14 +14,21 @@ const SHORTS_CATEGORIES = [
 
 const EXCLUDE_TITLES = ["שיר השירים", "תלמוד תורה וירטואלי"];
 
+interface CategoryOption {
+  label: string;
+  key: string;
+}
+
 interface Props {
   videos: YouTubeVideo[];
   title: string;
+  subtitle?: string;
   isShorts?: boolean;
   dark?: boolean;
+  categories?: CategoryOption[];
 }
 
-export default function VideoCarousel({ videos, title, isShorts = false, dark = false }: Props) {
+export default function VideoCarousel({ videos, title, subtitle, isShorts = false, dark = false, categories }: Props) {
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("");
   const trackRef = useRef<HTMLDivElement>(null);
@@ -113,13 +120,21 @@ export default function VideoCarousel({ videos, title, isShorts = false, dark = 
       {/* כותרת */}
       <div className="mb-4 px-1">
         <h2 className="text-2xl font-bold" style={{ color: titleColor }}>{title}</h2>
+        {subtitle && (
+          <p
+            className="text-sm mt-1"
+            style={{ color: dark ? "rgba(250,243,226,0.75)" : "var(--color-muted)" }}
+          >
+            {subtitle}
+          </p>
+        )}
         <div className="divider" style={{ background: "var(--color-ochre)" }} />
       </div>
 
       {/* טאבי קטגוריות */}
-      {isShorts && (
+      {(isShorts || categories) && (
         <div className="flex gap-2 flex-wrap mb-4" style={{ direction: "rtl" }}>
-          {SHORTS_CATEGORIES.map((cat) => (
+          {(categories ?? SHORTS_CATEGORIES).map((cat) => (
             <button
               key={cat.key}
               onClick={() => setActiveFilter(cat.key)}

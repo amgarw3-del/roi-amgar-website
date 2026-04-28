@@ -5,7 +5,7 @@ const topics = [
   { href: "/parasha", label: "פרשת שבוע" },
   { href: "/halacha", label: "הלכה" },
   { href: "/emuna", label: "אמונה" },
-  { href: "/rega-shel-tora", label: "רגע של תורה" },
+  { href: "/videos", label: "רואים תורה" },
   { href: "/moadim", label: "מועדים" },
 ];
 

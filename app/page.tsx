@@ -175,7 +175,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* רגע של תורה — רקע כהה */}
+      {/* רואים תורה — רקע כהה */}
       {ytShortsAll.length > 0 && (
         <section className="section" style={{ background: "var(--color-navy)" }}>
           <div className="container">

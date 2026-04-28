@@ -85,7 +85,7 @@ export default function Hero() {
 
             {/* CTAs */}
             <div className="flex flex-wrap gap-4">
-              <Link href="/shiurim" className="btn-primary">
+              <Link href="/videos" className="btn-primary">
                 צפו בשיעורים ←
               </Link>
               <Link
