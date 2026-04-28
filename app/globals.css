@@ -255,3 +255,140 @@ a:hover { color: var(--color-navy); }
 @media (prefers-reduced-motion: reduce) {
   .animate-chat-enter { animation: none; }
 }
+
+/* ============================================================
+   NAVY-BG CONTRAST RESCUE — GLOBAL
+   מטפל באופן גורף בכחול-על-כחול בכל אזור עם רקע נייבי באתר.
+   רק color / background / border — ללא שינוי לפריסה או למותג.
+   כלל זהב: על רקע נייבי — טקסט בקרם / לבן / אוכרה־בהיר. לעולם לא בכחול.
+   ============================================================ */
+
+/* ה-h1/h2 הגלובלי (שורה 62) קובע color:navy לכל כותרת — ב-Tailwind v4 זה
+   מנצח את text-white בגלל cascade layers. לכן ה-RESCUE משתמש ב-!important
+   רק עבור color/background על אזורי הנייבי. */
+
+[style*="--color-navy"],
+[style*="--color-navy-deep"],
+[style*="--color-primary"],
+[style*="--color-primary-dark"],
+[style*="#1a3a52"],
+[style*="#0f2638"],
+[style*="rgb(26, 58, 82)"],
+[style*="rgb(15, 38, 56)"],
+.bg-navy,
+.bg-navy-deep,
+.navy-section,
+.divrei-torah-hero,
+.categories-sidebar,
+.newsletter-section {
+  color: var(--color-bg-paper) !important;
+}
+
+/* כותרות בתוך כל אזור נייבי — מבטל את h1{color:navy} הגלובלי */
+[style*="--color-navy"] h1, [style*="--color-navy"] h2, [style*="--color-navy"] h3, [style*="--color-navy"] h4,
+[style*="--color-navy-deep"] h1, [style*="--color-navy-deep"] h2, [style*="--color-navy-deep"] h3,
+[style*="--color-primary"] h1, [style*="--color-primary"] h2, [style*="--color-primary"] h3, [style*="--color-primary"] h4,
+[style*="--color-primary-dark"] h1, [style*="--color-primary-dark"] h2, [style*="--color-primary-dark"] h3,
+[style*="#1a3a52"] h1, [style*="#1a3a52"] h2, [style*="#1a3a52"] h3,
+[style*="#0f2638"] h1, [style*="#0f2638"] h2, [style*="#0f2638"] h3,
+.bg-navy h1, .bg-navy h2, .bg-navy h3, .bg-navy h4,
+.bg-navy-deep h1, .bg-navy-deep h2, .bg-navy-deep h3, .bg-navy-deep h4,
+.navy-section h1, .navy-section h2, .navy-section h3, .navy-section h4,
+.divrei-torah-hero h1, .divrei-torah-hero h2, .divrei-torah-hero h3 {
+  color: var(--color-bg-paper) !important;
+}
+
+/* טקסט משני / פסקאות / span בתוך אזור נייבי */
+[style*="--color-navy"] p, [style*="--color-navy"] span, [style*="--color-navy"] small,
+[style*="--color-primary"] p, [style*="--color-primary"] span, [style*="--color-primary"] small,
+[style*="#1a3a52"] p, [style*="#1a3a52"] span,
+[style*="#0f2638"] p, [style*="#0f2638"] span,
+.bg-navy p, .bg-navy .subtitle, .bg-navy small,
+.bg-navy-deep p, .bg-navy-deep .subtitle, .bg-navy-deep small,
+.navy-section p, .navy-section .subtitle, .navy-section small {
+  color: rgba(250, 243, 226, 0.85) !important;
+}
+
+/* קישורים ופריטי תפריט בתוך אזור נייבי */
+[style*="--color-navy"] a, [style*="--color-navy"] li, [style*="--color-navy"] button,
+[style*="--color-primary"] a, [style*="--color-primary"] li, [style*="--color-primary"] button,
+[style*="#1a3a52"] a, [style*="#1a3a52"] li, [style*="#1a3a52"] button,
+[style*="#0f2638"] a, [style*="#0f2638"] li, [style*="#0f2638"] button,
+.bg-navy a, .bg-navy li, .bg-navy .menu-item, .bg-navy button,
+.bg-navy-deep a, .bg-navy-deep li, .bg-navy-deep button,
+.navy-section a, .navy-section li, .navy-section button,
+.categories-sidebar a, .categories-sidebar li, .categories-sidebar button {
+  color: rgba(250, 243, 226, 0.9) !important;
+}
+
+.bg-navy a:hover, .bg-navy li:hover,
+.bg-navy-deep a:hover, .bg-navy-deep li:hover,
+.navy-section a:hover, .navy-section li:hover,
+.categories-sidebar a:hover, .categories-sidebar li:hover {
+  color: var(--color-bg-paper);
+  background: rgba(250, 243, 226, 0.06);
+}
+
+.bg-navy a.active, .bg-navy li.active, .bg-navy .is-active,
+.navy-section a.active, .navy-section li.active,
+.categories-sidebar a.active, .categories-sidebar .is-active {
+  color: var(--color-bg-paper);
+  background: rgba(250, 243, 226, 0.08);
+}
+
+.bg-navy .group-title, .bg-navy .category-group-title,
+.navy-section .group-title,
+.categories-sidebar .category-group-title {
+  color: var(--color-ochre-light);
+  font-weight: 600;
+}
+
+.bg-navy hr, .bg-navy-deep hr {
+  border-color: rgba(250, 243, 226, 0.18);
+}
+
+.bg-navy svg, .bg-navy .icon, .bg-navy .chevron,
+.bg-navy-deep svg, .bg-navy-deep .icon,
+.navy-section svg, .navy-section .icon,
+.categories-sidebar svg, .categories-sidebar .chevron {
+  color: rgba(250, 243, 226, 0.78);
+  fill: currentColor;
+}
+
+/* ===== טופס דיוור — שדות קריאים על רקע נייבי ===== */
+.newsletter-section input[type="text"],
+.newsletter-section input[type="tel"],
+.newsletter-section input[type="email"],
+.newsletter-section .newsletter-input,
+.bg-navy input[type="text"],
+.bg-navy input[type="tel"],
+.bg-navy input[type="email"],
+.bg-navy-deep input[type="text"],
+.bg-navy-deep input[type="tel"],
+.bg-navy-deep input[type="email"] {
+  background: rgba(250, 243, 226, 0.96);
+  color: var(--color-ink);
+  border: 1px solid rgba(250, 243, 226, 0.4);
+  border-radius: 6px;
+  padding: 14px 18px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.newsletter-section input::placeholder,
+.bg-navy input::placeholder,
+.bg-navy-deep input::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+
+.newsletter-section input:focus,
+.bg-navy input:focus,
+.bg-navy-deep input:focus {
+  border-color: var(--color-ochre);
+  box-shadow: 0 0 0 3px rgba(168, 106, 44, 0.25);
+  background: #ffffff;
+}
+/* ============================================================ */
