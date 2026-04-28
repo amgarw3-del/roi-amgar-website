@@ -35,8 +35,8 @@ export default async function DivarToraPage({ searchParams }: Props) {
         style={{ background: "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)" }}
       >
         <div className="container text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">דברי תורה</h1>
-          <p className="text-white/80">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: "var(--color-bg-paper)" }}>דברי תורה</h1>
+          <p style={{ color: "rgba(250,243,226,0.8)" }}>
             {activeSubTopic
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               ? `דברי תורה על: ${(activeSubTopic as any).hebrewName}`
