@@ -104,7 +104,7 @@ export default function SubTopicSidebar({
           className={`flex items-center px-3 py-2 rounded-lg font-semibold transition-colors mb-1 ${
             !activeSub ? "text-white" : "text-gray-600 hover:bg-gray-100"
           }`}
-          style={!activeSub ? { background: "var(--color-primary)" } : {}}
+          style={!activeSub ? { background: "var(--color-primary)", color: "var(--color-bg-paper)" } : {}}
         >
           {allLabel}
         </Link>
@@ -126,7 +126,7 @@ export default function SubTopicSidebar({
                   ? "text-white"
                   : "text-gray-700 hover:bg-gray-50"
               }`}
-              style={isGroupActive ? { background: "var(--color-primary)" } : {}}
+              style={isGroupActive ? { background: "var(--color-primary)", color: "var(--color-bg-paper)" } : {}}
             >
               <span>{GROUP_LABELS[group]}</span>
               {isOpen
@@ -162,7 +162,7 @@ export default function SubTopicSidebar({
                             }`}
                             style={
                               isChumashActive
-                                ? { background: "var(--color-accent)" }
+                                ? { background: "var(--color-accent)", color: "var(--color-bg-paper)" }
                                 : {}
                             }
                           >
@@ -186,7 +186,7 @@ export default function SubTopicSidebar({
                                         ? "font-semibold text-white"
                                         : "text-gray-600 hover:bg-gray-100"
                                     }`}
-                                    style={isActive ? { background: "var(--color-accent)" } : {}}
+                                    style={isActive ? { background: "var(--color-accent)", color: "var(--color-bg-paper)" } : {}}
                                   >
                                     {st.hebrewName}
                                   </Link>
@@ -212,7 +212,7 @@ export default function SubTopicSidebar({
                               ? "font-semibold text-white"
                               : "text-gray-600 hover:bg-gray-100"
                           }`}
-                          style={isActive ? { background: "var(--color-accent)" } : {}}
+                          style={isActive ? { background: "var(--color-accent)", color: "var(--color-bg-paper)" } : {}}
                         >
                           {st.hebrewName}
                         </Link>
