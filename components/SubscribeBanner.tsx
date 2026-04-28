@@ -48,16 +48,16 @@ export default function SubscribeBanner() {
                 required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="flex-1 rounded-xl px-4 py-3 text-gray-800 text-sm font-medium outline-none focus:ring-2"
-                style={{ direction: "rtl" }}
+                className="flex-1 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2"
+                style={{ direction: "rtl", background: "rgba(250,243,226,0.96)", color: "var(--color-ink)" }}
               />
               <input
                 type="tel"
                 placeholder="טלפון"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="flex-1 rounded-xl px-4 py-3 text-gray-800 text-sm font-medium outline-none focus:ring-2"
-                style={{ direction: "rtl" }}
+                className="flex-1 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2"
+                style={{ direction: "rtl", background: "rgba(250,243,226,0.96)", color: "var(--color-ink)" }}
               />
               <input
                 type="email"
@@ -65,8 +65,8 @@ export default function SubscribeBanner() {
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="flex-1 rounded-xl px-4 py-3 text-gray-800 text-sm font-medium outline-none focus:ring-2"
-                style={{ direction: "rtl" }}
+                className="flex-1 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2"
+                style={{ direction: "rtl", background: "rgba(250,243,226,0.96)", color: "var(--color-ink)" }}
               />
               <button
                 type="submit"
