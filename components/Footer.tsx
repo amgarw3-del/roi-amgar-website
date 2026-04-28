@@ -5,7 +5,6 @@ const topics = [
   { href: "/parasha", label: "פרשת שבוע" },
   { href: "/halacha", label: "הלכה" },
   { href: "/emuna", label: "אמונה" },
-  { href: "/zugiyut", label: "זוגיות" },
   { href: "/rega-shel-tora", label: "רגע של תורה" },
   { href: "/moadim", label: "מועדים" },
 ];
@@ -54,7 +53,7 @@ export default function Footer() {
                 lineHeight: 1.7,
               }}
             >
-              שיעורי תורה, הלכה, אמונה וזוגיות — תוכן מעמיק ומחיה מתורת ישראל.
+              שיעורי תורה, הלכה ואמונה — תוכן מעמיק ומחיה מתורת ישראל.
             </p>
           </div>
 

@@ -14,7 +14,6 @@ const categoryMap: Record<string, { hebrewName: string; desc: string }> = {
   parasha: { hebrewName: "פרשת שבוע", desc: "שיעורים וסיכומים לפרשת השבוע" },
   halacha: { hebrewName: "הלכה", desc: "שאלות ותשובות הלכתיות" },
   emuna: { hebrewName: "אמונה", desc: "מחשבה ועומק רוחני" },
-  zugiyut: { hebrewName: "זוגיות", desc: "שיעורים ומאמרים לזוגיות בריאה" },
   "rega-shel-tora": { hebrewName: "רגע של תורה", desc: "סרטונים קצרים ומרוממים" },
   moadim: { hebrewName: "מועדים", desc: "שיעורים לחגים ומועדי ישראל" },
   shiurim: { hebrewName: "כל השיעורים", desc: "כל שיעורי הרב רועי אמגר" },

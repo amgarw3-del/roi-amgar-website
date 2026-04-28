@@ -6,6 +6,9 @@ import { scanStatusSchema } from "./scanStatus";
 import subscriberSchema from "./subscriber";
 import { divarToraSchema } from "./divarTora";
 import { subTopicSchema } from "./subTopic";
+import { lectureSchema } from "./lecture";
+import { testimonialSchema } from "./testimonial";
+import { lectureGalleryImageSchema } from "./lectureGalleryImage";
 
 export const schemaTypes = [
   categorySchema,
@@ -16,4 +19,7 @@ export const schemaTypes = [
   divarToraSchema,
   scanStatusSchema,
   subscriberSchema,
+  lectureSchema,
+  testimonialSchema,
+  lectureGalleryImageSchema,
 ];

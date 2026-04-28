@@ -9,10 +9,11 @@ const navLinks = [
   { href: "/parasha", label: "פרשת שבוע" },
   { href: "/halacha", label: "הלכה" },
   { href: "/emuna", label: "אמונה" },
-  { href: "/zugiyut", label: "זוגיות" },
+  { href: "/videos", label: "שיעורים וחיזוקים בוידאו" },
   { href: "/dvar-tora", label: "דברי תורה" },
   { href: "/moadim", label: "מועדים" },
-  { href: "/shaal", label: "שאל את הרב" },
+  { href: "/lectures", label: "הרצאות" },
+  { href: "/shaal", label: 'שו"ת עם הרב' },
 ];
 
 export default function Header() {

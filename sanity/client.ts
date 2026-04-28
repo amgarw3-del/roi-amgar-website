@@ -34,7 +34,7 @@ export const queries = {
   // שאלות ותשובות אחרונות
   latestQna: (limit = 3) =>
     `*[_type == "qna" && isPublic == true] | order(publishedAt desc) [0...${limit}] {
-      _id, question, answer, category->{hebrewName, slug}, publishedAt, answerType
+      _id, question, answer, slug, category->{hebrewName, slug}, publishedAt, answerType
     }`,
 
   // לפי קטגוריה
@@ -124,5 +124,25 @@ export const queries = {
   // סטטוס סריקה (לאוטומציה)
   scanStatus: `*[_type == "scanStatus"][0] {
     lastScannedAt, latestVideoId, latestPostId
+  }`,
+
+  // הרצאות
+  allLectures: `*[_type == "lecture" && published == true] | order(order asc, _createdAt desc) {
+    _id, title, summary, flyer
+  }`,
+
+  featuredLectures: (limit = 3) =>
+    `*[_type == "lecture" && published == true] | order(order asc, _createdAt desc) [0...${limit}] {
+      _id, title, flyer
+    }`,
+
+  // המלצות על הרצאות
+  allTestimonials: `*[_type == "testimonial"] | order(order asc, _createdAt desc) {
+    _id, quote, name, role, photo
+  }`,
+
+  // גלריית הרצאות
+  allLectureGallery: `*[_type == "lectureGalleryImage"] | order(order asc, _createdAt desc) {
+    _id, image, caption
   }`,
 };

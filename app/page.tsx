@@ -7,6 +7,8 @@ import NewsletterSignup from "@/components/NewsletterSignup";
 import VideoCarousel from "@/components/VideoCarousel";
 import SubscribeBanner from "@/components/SubscribeBanner";
 import DonationWidget from "@/components/DonationWidget";
+import LecturesPromoBanner from "@/components/home/LecturesPromoBanner";
+import LecturesStrip from "@/components/home/LecturesStrip";
 import { fetchYouTubeVideos } from "@/lib/youtube";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -17,8 +19,7 @@ const categories = [
   { href: "/parasha", label: "פרשת שבוע", emoji: "📖", desc: "שיעורים ודברי תורה לפרשה" },
   { href: "/halacha", label: "הלכה", emoji: "⚖️", desc: "שאלות ותשובות הלכתיות" },
   { href: "/emuna", label: "אמונה", emoji: "✡️", desc: "מחשבה ועומק רוחני" },
-  { href: "/zugiyut", label: "זוגיות", emoji: "💑", desc: "שיעורים לזוגיות בריאה" },
-  { href: "/rega-shel-tora", label: "רגע של תורה", emoji: "⚡", desc: "סרטונים קצרים ומרוממים" },
+  { href: "/videos", label: "רואים תורה", emoji: "⚡", desc: "לשיעורים וחיזוקים בוידאו" },
   { href: "/moadim", label: "מועדים", emoji: "🕎", desc: "לפי לוח השנה העברי" },
 ];
 
@@ -70,6 +71,7 @@ export default async function HomePage() {
   return (
     <>
       <Hero />
+      <LecturesPromoBanner />
       <DonationWidget />
       <SubscribeBanner />
 
@@ -177,13 +179,16 @@ export default async function HomePage() {
       {ytShortsAll.length > 0 && (
         <section className="section" style={{ background: "var(--color-navy)" }}>
           <div className="container">
-            <VideoCarousel videos={ytShortsAll} title="רגע של תורה" isShorts dark />
+            <VideoCarousel videos={ytShortsAll} title="רואים תורה" subtitle="לשיעורים וחיזוקים בוידאו" isShorts dark />
           </div>
         </section>
       )}
 
       {/* ניוזלטר */}
       <NewsletterSignup />
+
+      {/* סטריפ הרצאות */}
+      <LecturesStrip />
 
       {/* פוסטים אחרונים */}
       {posts.length > 0 && (

@@ -7,6 +7,7 @@ import AdminBar from "./AdminBar";
 import Footer from "./Footer";
 import NewsletterPopup from "./NewsletterPopup";
 import ChatBubble from "./chat/ChatBubble";
+import WhatsAppFloatingButton from "./lectures/WhatsAppFloatingButton";
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,6 +26,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <Footer />
       <NewsletterPopup />
       <ChatBubble />
+      <WhatsAppFloatingButton />
     </>
   );
 }

@@ -22,6 +22,7 @@ export const subTopicSchema = defineType({
           { title: "פרשיות", value: "parasha" },
           { title: "צומות", value: "fast" },
           { title: "מועדים לאומיים", value: "national" },
+          { title: "כללי", value: "general" },
         ],
       },
     }),
