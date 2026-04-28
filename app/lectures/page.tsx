@@ -5,11 +5,12 @@ import GalleryGrid from "@/components/lectures/GalleryGrid";
 import LectureFAQ from "@/components/lectures/LectureFAQ";
 import { buildLectureInquiryUrl } from "@/lib/whatsapp";
 import {
-  Users,
   CalendarDays,
   Building2,
   HeartHandshake,
-  PartyPopper,
+  GraduationCap,
+  BookOpen,
+  Flag,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -24,9 +25,10 @@ export const revalidate = 3600;
 const audiences = [
   { icon: Building2, label: "בתי כנסת", desc: "דרשות שבת ושיעור שבועי" },
   { icon: CalendarDays, label: "שבתות עיון", desc: "סדרת שיעורים מחוברת" },
-  { icon: Users, label: "ועדי קהילה", desc: "אירועי חג ותוכן ייחודי" },
   { icon: HeartHandshake, label: "ארגונים ועמותות", desc: "כנסים וימי עיון" },
-  { icon: PartyPopper, label: "אירועים משפחתיים", desc: "בר מצווה, שבע ברכות ועוד" },
+  { icon: GraduationCap, label: "ישיבות תיכוניות", desc: "תוכן בגובה העיניים" },
+  { icon: BookOpen, label: "אולפנות", desc: "אמונה, זהות וערכים" },
+  { icon: Flag, label: "תנועות נוער", desc: "השראה לבני הנוער" },
 ];
 
 export default async function LecturesPage() {
@@ -99,7 +101,7 @@ export default async function LecturesPage() {
         >
           למי מתאים
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {audiences.map((a) => {
             const Icon = a.icon;
             return (
