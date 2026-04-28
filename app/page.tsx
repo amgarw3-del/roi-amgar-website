@@ -7,7 +7,6 @@ import NewsletterSignup from "@/components/NewsletterSignup";
 import VideoCarousel from "@/components/VideoCarousel";
 import SubscribeBanner from "@/components/SubscribeBanner";
 import DonationWidget from "@/components/DonationWidget";
-import LecturesPromoBanner from "@/components/home/LecturesPromoBanner";
 import LecturesStrip from "@/components/home/LecturesStrip";
 import { fetchYouTubeVideos } from "@/lib/youtube";
 import Link from "next/link";
@@ -71,7 +70,6 @@ export default async function HomePage() {
   return (
     <>
       <Hero />
-      <LecturesPromoBanner />
       <DonationWidget />
       <SubscribeBanner />
 
