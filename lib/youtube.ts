@@ -34,6 +34,12 @@ async function _fetchYouTubeVideos(
   maxResults: number,
   videoDuration?: "short" | "medium" | "long"
 ): Promise<YouTubeVideo[]> {
+  // בסביבת dev — דולגים על ה-API כדי לחסוך quota (כל restart מכלה 300 יחידות).
+  // ה-RSS fallback יטפל בזה חינם.
+  if (process.env.NODE_ENV === "development") {
+    throw new Error("YouTube API skipped in dev (quota conservation)");
+  }
+
   const key = process.env.YOUTUBE_API_KEY;
   if (!key) throw new Error("YOUTUBE_API_KEY missing");
 
@@ -125,13 +131,15 @@ export async function fetchYouTubeVideos(
     _syncStatus.lastSource = "rss";
     _syncStatus.lastSuccessAt = Date.now();
 
-    // RSS לא מבחין ב-duration. אם המבקש ביקש "short" — נחזיר רק חשודים כשורטס לפי כותרת.
-    // אחרת — נחזיר את כל מה שיש (עד maxResults).
+    // RSS לא מבחין ב-duration. מסננים לפי כותרת, אבל אם הפילטר מחזיר ריק —
+    // מחזירים את כל הסרטונים האחרונים כ-fallback (עדיף משהו על פני ריק).
     let filtered = rssItems;
     if (videoDuration === "short") {
-      filtered = rssItems.filter(isLikelyShort);
+      const shorts = rssItems.filter(isLikelyShort);
+      filtered = shorts.length > 0 ? shorts : rssItems;
     } else if (videoDuration === "long" || videoDuration === "medium") {
-      filtered = rssItems.filter((v) => !isLikelyShort(v));
+      const longs = rssItems.filter((v) => !isLikelyShort(v));
+      filtered = longs.length > 0 ? longs : rssItems;
     }
     return filtered.slice(0, maxResults);
   } catch (e) {
