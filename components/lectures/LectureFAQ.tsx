@@ -3,29 +3,34 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-const faqs = [
+const fallbackFaqs = [
   {
-    q: "האם הרב מגיע גם מחוץ לאזור המרכז?",
-    a: "הרב מרצה ברחבי הארץ. נשמח לתאם הגעה לכל אזור — צרו קשר ונבדוק זמינות.",
+    question: "האם הרב מגיע גם מחוץ לאזור המרכז?",
+    answer: "הרב מרצה ברחבי הארץ. נשמח לתאם הגעה לכל אזור — צרו קשר ונבדוק זמינות.",
   },
   {
-    q: "כמה זמן מראש כדאי לתאם הרצאה?",
-    a: "ככל שמתאמים מוקדם יותר — כך קל יותר למצוא תאריך מתאים. גם הזמנות לטווח קצר אפשריות בכפוף לזמינות.",
+    question: "כמה זמן מראש כדאי לתאם הרצאה?",
+    answer: "ככל שמתאמים מוקדם יותר — כך קל יותר למצוא תאריך מתאים. גם הזמנות לטווח קצר אפשריות בכפוף לזמינות.",
   },
   {
-    q: "האם ניתן לבקש נושא ספציפי המתאים לקהל שלנו?",
-    a: "בהחלט. הרב מתאים את התוכן לקהל היעד ולמטרת האירוע — בית כנסת, שבת עיון, ועד קהילה או אירוע משפחתי.",
+    question: "האם ניתן לבקש נושא ספציפי המתאים לקהל שלנו?",
+    answer: "בהחלט. הרב מתאים את התוכן לקהל היעד ולמטרת האירוע — בית כנסת, שבת עיון, ועד קהילה או אירוע משפחתי.",
   },
 ];
 
-export default function LectureFAQ() {
+export default function LectureFAQ({
+  faqs,
+}: {
+  faqs?: { _id?: string; question: string; answer: string }[];
+}) {
   const [open, setOpen] = useState<number | null>(0);
+  const items = faqs && faqs.length > 0 ? faqs : fallbackFaqs;
 
   return (
     <div className="space-y-3">
-      {faqs.map((item, i) => (
+      {items.map((item, i) => (
         <div
-          key={i}
+          key={(item as { _id?: string })._id ?? i}
           className="card overflow-hidden"
           style={{ background: "white" }}
         >
@@ -34,7 +39,7 @@ export default function LectureFAQ() {
             className="w-full flex items-center justify-between p-5 text-right"
             onClick={() => setOpen(open === i ? null : i)}
           >
-            <span className="font-semibold text-gray-900 text-lg">{item.q}</span>
+            <span className="font-semibold text-gray-900 text-lg">{item.question}</span>
             <ChevronDown
               size={20}
               className="transition-transform flex-shrink-0"
@@ -45,7 +50,7 @@ export default function LectureFAQ() {
             />
           </button>
           {open === i && (
-            <div className="px-5 pb-5 text-gray-700 leading-relaxed">{item.a}</div>
+            <div className="px-5 pb-5 text-gray-700 leading-relaxed">{item.answer}</div>
           )}
         </div>
       ))}

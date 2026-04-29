@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@sanity/client";
+import { sendQuestionNotification } from "@/lib/send-email";
 
-// Rate limiting in-memory (לעדכן ל-Upstash Redis בפרויקשן)
+const sanity = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
+  token: process.env.SANITY_API_TOKEN,
+  apiVersion: "2024-01-01",
+  useCdn: false,
+});
+
 const ipRequests = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 3;        // מקסימום שאלות
-const RATE_WINDOW = 60 * 60; // לשעה (בשניות)
+const RATE_LIMIT = 3;
+const RATE_WINDOW = 60 * 60;
 
 function checkRateLimit(ip: string): boolean {
   const now = Math.floor(Date.now() / 1000);
@@ -21,21 +30,21 @@ function sanitize(str: string): string {
   return str.trim().replace(/<[^>]*>/g, "").slice(0, 2000);
 }
 
+function redirect(req: NextRequest, target: string) {
+  // 303 forces the browser to GET after a POST — without this, Next.js page routes return 405.
+  return NextResponse.redirect(new URL(target, req.url), { status: 303 });
+}
+
 export async function POST(req: NextRequest) {
-  // IP Rate limiting
   const ip =
     req.headers.get("cf-connecting-ip") ??
     req.headers.get("x-forwarded-for")?.split(",")[0] ??
     "unknown";
 
   if (!checkRateLimit(ip)) {
-    return NextResponse.json(
-      { error: "שלחת יותר מדי שאלות. נסה שוב מאוחר יותר." },
-      { status: 429 }
-    );
+    return redirect(req, "/shaal?error=rate");
   }
 
-  // Cloudflare Turnstile verification (אחרי שמגדירים)
   const turnstileToken = req.headers.get("cf-turnstile-response");
   if (process.env.TURNSTILE_SECRET_KEY && turnstileToken) {
     const verifyRes = await fetch(
@@ -50,42 +59,44 @@ export async function POST(req: NextRequest) {
         }),
       }
     );
-    const verifyData = await verifyRes.json() as { success: boolean };
-    if (!verifyData.success) {
-      return NextResponse.json({ error: "אימות נכשל. נסה שוב." }, { status: 400 });
-    }
+    const verifyData = (await verifyRes.json()) as { success: boolean };
+    if (!verifyData.success) return redirect(req, "/shaal?error=invalid");
   }
 
-  // Parse & validate
   let name: string, question: string, questionType: string;
   try {
     const formData = await req.formData();
-    name = sanitize(formData.get("name")?.toString() ?? "אנונימי");
+    name = sanitize(formData.get("name")?.toString() ?? "");
     question = sanitize(formData.get("question")?.toString() ?? "");
     questionType = sanitize(formData.get("questionType")?.toString() ?? "general");
   } catch {
-    return NextResponse.redirect(new URL("/shaal?error=invalid", req.url));
+    return redirect(req, "/shaal?error=invalid");
   }
 
-  if (question.length < 10) {
-    return NextResponse.redirect(new URL("/shaal?error=short", req.url));
+  if (question.length < 10) return redirect(req, "/shaal?error=short");
+  if (/https?:\/\//.test(question)) return redirect(req, "/shaal?error=spam");
+
+  try {
+    await sanity.create({
+      _type: "qna",
+      question,
+      askerName: name || "אנונימי",
+      questionType,
+      isPublic: false,
+    });
+  } catch (err) {
+    console.error("[ask] Sanity create failed:", err);
+    return redirect(req, "/shaal?error=server");
   }
 
-  // Spam detection: reject if contains URLs
-  if (/https?:\/\//.test(question)) {
-    return NextResponse.redirect(new URL("/shaal?error=spam", req.url));
-  }
+  // Email is best-effort — don't block the user if it fails.
+  sendQuestionNotification({ name: name || "אנונימי", question, questionType }).catch(
+    (err) => console.error("[ask] email failed:", err)
+  );
 
-  // TODO: שליחה למייל עם nodemailer
-  // await sendQuestionEmail({ name, question, questionType });
-  console.log(`[שאל את הרב] IP:${ip} | Type:${questionType} | Name:${name}`);
-  console.log(`Question: ${question.slice(0, 100)}...`);
-
-  // Redirect to success
-  return NextResponse.redirect(new URL("/shaal?sent=1", req.url));
+  return redirect(req, "/shaal?sent=1");
 }
 
-// בלק CSRF-style: רק POST מהאתר עצמו
 export async function GET() {
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }

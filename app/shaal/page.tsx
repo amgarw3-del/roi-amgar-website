@@ -7,9 +7,22 @@ export const metadata: Metadata = {
   description: "שלח שאלה לרב רועי אמגר וקבל תשובה. ארכיון שאלות ותשובות הלכתיות הניתן לחיפוש.",
 };
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
-export default async function ShaalPage() {
+const ERROR_MESSAGES: Record<string, string> = {
+  short: "השאלה קצרה מדי — נסה לכתוב לפחות 10 תווים.",
+  spam: "לא ניתן לכלול קישורים בשאלה.",
+  invalid: "שליחת השאלה נכשלה. בדוק את השדות ונסה שוב.",
+  rate: "שלחת יותר מדי שאלות. נסה שוב מאוחר יותר.",
+  server: "אירעה שגיאה בשרת. נסה שוב בעוד מספר רגעים.",
+};
+
+export default async function ShaalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sent?: string; error?: string }>;
+}) {
+  const { sent, error } = await searchParams;
   const qnas = await client.fetch(queries.latestQna(20)).catch(() => []);
 
   const structuredData = {
@@ -48,6 +61,17 @@ export default async function ShaalPage() {
       <section className="section" style={{ background: "var(--color-warm)" }}>
         <div className="container">
           <div className="max-w-xl mx-auto card p-8">
+            {sent === "1" && (
+              <div className="mb-5 p-4 rounded-xl text-sm font-semibold text-green-800 border border-green-200" style={{ background: "#ecfdf5" }}>
+                ✅ תודה! השאלה התקבלה ונשלחה לרב. תיענה בעז&quot;ה בקרוב.
+              </div>
+            )}
+            {error && (
+              <div className="mb-5 p-4 rounded-xl text-sm font-semibold text-red-800 border border-red-200" style={{ background: "#fef2f2" }}>
+                ⚠️ {ERROR_MESSAGES[error] ?? "אירעה שגיאה. נסה שוב."}
+              </div>
+            )}
+
             <h2 className="text-xl font-bold mb-2" style={{ color: "var(--color-primary)" }}>
               שלח שאלה
             </h2>

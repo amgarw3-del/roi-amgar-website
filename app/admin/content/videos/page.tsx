@@ -13,22 +13,31 @@ const sanity = createClient({
   useCdn: false,
 });
 
-interface VideoItem {
+export interface VideoItem {
   _id: string;
   title: string;
   youtubeId: string;
   status: string;
   hidden: boolean;
   publishedAt: string;
-  category?: { hebrewName: string };
+  level?: string;
+  platform?: string;
+  summary?: string;
+  category?: { _id?: string; hebrewName: string };
 }
 
 export default async function AdminVideosPage() {
-  const videos = await sanity.fetch<VideoItem[]>(
-    `*[_type == "video"] | order(publishedAt desc) [0...100] {
-      _id, title, youtubeId, status, hidden, publishedAt, category->{hebrewName}
-    }`
-  );
+  const [videos, categories] = await Promise.all([
+    sanity.fetch<VideoItem[]>(
+      `*[_type == "video"] | order(publishedAt desc) [0...100] {
+        _id, title, youtubeId, status, hidden, publishedAt, level, platform, summary,
+        category->{_id, hebrewName}
+      }`
+    ),
+    sanity.fetch<{ _id: string; hebrewName: string }[]>(
+      `*[_type == "category"] | order(name asc) { _id, hebrewName }`
+    ),
+  ]);
 
   const pending = videos.filter((v) => v.status === "draft" && !v.hidden);
   const published = videos.filter((v) => v.status === "published" && !v.hidden);
@@ -57,6 +66,7 @@ export default async function AdminVideosPage() {
         pending={pending}
         published={published}
         hidden={hidden}
+        categories={categories}
       />
     </div>
   );

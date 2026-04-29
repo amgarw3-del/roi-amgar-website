@@ -15,14 +15,18 @@ import {
   LogOut,
   Menu,
   X,
+  Mic,
+  Home,
 } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "דשבורד", icon: LayoutDashboard, exact: true },
+  { href: "/admin/content/homepage", label: "עמוד הבית", icon: Home },
   { href: "/admin/content/videos", label: "סרטונים", icon: Video },
   { href: "/admin/content/divrei-tora", label: "דברי תורה", icon: BookOpen },
   { href: "/admin/content/blog", label: "מאמרים", icon: FileText },
   { href: "/admin/content/qna", label: "שאל את הרב", icon: HelpCircle },
+  { href: "/admin/content/lectures", label: "הרצאות", icon: Mic },
   { href: "/admin/content/categories", label: "קטגוריות", icon: Tag },
   { href: "/admin/newsletter", label: "ניוזלטר", icon: Mail },
 ];

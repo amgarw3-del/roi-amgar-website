@@ -2,13 +2,21 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, ExternalLink } from "lucide-react";
+import { Trash2, Pencil, ExternalLink, X } from "lucide-react";
 import type { BlogItem } from "@/app/admin/content/blog/page";
 
 const levelLabels: Record<string, string> = {
   beginner: "מתחיל",
   advanced: "מתקדם",
   "talmidei-torah": "בני תורה",
+};
+
+type FormState = {
+  _id?: string;
+  title: string;
+  bodyText: string;
+  categoryId: string;
+  level: string;
 };
 
 export default function BlogList({
@@ -20,32 +28,59 @@ export default function BlogList({
 }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    bodyText: "",
-    categoryId: "",
-    level: "beginner",
+  const [form, setForm] = useState<FormState>({
+    title: "", bodyText: "", categoryId: "", level: "beginner",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState<string | null>(null);
 
-  async function handleCreate() {
+  const isEditing = Boolean(form._id);
+
+  function openCreate() {
+    setForm({ title: "", bodyText: "", categoryId: "", level: "beginner" });
+    setShowForm(true);
+  }
+
+  async function openEdit(id: string) {
+    setLoadingEdit(id);
+    try {
+      const res = await fetch("/api/admin/get-blog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _id: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error ?? "שגיאה בטעינה"); return; }
+      setForm({
+        _id: data._id,
+        title: data.title ?? "",
+        bodyText: data.bodyText ?? "",
+        categoryId: data.categoryId ?? "",
+        level: data.level ?? "beginner",
+      });
+      setShowForm(true);
+    } finally { setLoadingEdit(null); }
+  }
+
+  async function save() {
     if (!form.title || !form.bodyText) {
       alert("כותרת ותוכן הם שדות חובה");
       return;
     }
     setSubmitting(true);
     try {
-      await fetch("/api/admin/create-blog", {
+      const url = isEditing ? "/api/admin/update-blog" : "/api/admin/create-blog";
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error ?? "שגיאה"); return; }
       setForm({ title: "", bodyText: "", categoryId: "", level: "beginner" });
       setShowForm(false);
       router.refresh();
-    } finally {
-      setSubmitting(false);
-    }
+    } finally { setSubmitting(false); }
   }
 
   async function deletePost(id: string) {
@@ -53,7 +88,7 @@ export default function BlogList({
     await fetch("/api/admin/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ _id: id }),
     });
     router.refresh();
   }
@@ -62,7 +97,7 @@ export default function BlogList({
     <div>
       <div className="mb-6">
         <button
-          onClick={() => setShowForm((s) => !s)}
+          onClick={() => (showForm ? setShowForm(false) : openCreate())}
           className="px-4 py-2 rounded-xl font-semibold text-sm text-white"
           style={{ background: "var(--color-accent)" }}
         >
@@ -72,7 +107,12 @@ export default function BlogList({
 
       {showForm && (
         <div className="card p-5 mb-6 border-2" style={{ borderColor: "var(--color-accent)" }}>
-          <h3 className="font-bold mb-4" style={{ color: "var(--color-primary)" }}>מאמר חדש</h3>
+          <div className="flex justify-between mb-4">
+            <h3 className="font-bold" style={{ color: "var(--color-primary)" }}>
+              {isEditing ? "עריכת מאמר" : "מאמר חדש"}
+            </h3>
+            <button onClick={() => setShowForm(false)} className="text-gray-400"><X size={18} /></button>
+          </div>
           <div className="flex flex-col gap-3">
             <div>
               <label className="text-sm font-medium text-gray-600 block mb-1">כותרת *</label>
@@ -87,7 +127,7 @@ export default function BlogList({
               <textarea
                 value={form.bodyText}
                 onChange={(e) => setForm((f) => ({ ...f, bodyText: e.target.value }))}
-                rows={8}
+                rows={10}
                 className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
@@ -120,12 +160,12 @@ export default function BlogList({
             </div>
             <div className="flex gap-3 mt-1">
               <button
-                onClick={handleCreate}
+                onClick={save}
                 disabled={submitting}
                 className="px-5 py-2 rounded-xl font-bold text-sm text-white disabled:opacity-50"
                 style={{ background: "var(--color-primary)" }}
               >
-                {submitting ? "שומר..." : "פרסם מאמר"}
+                {submitting ? "שומר..." : isEditing ? "עדכן מאמר" : "פרסם מאמר"}
               </button>
               <button
                 onClick={() => setShowForm(false)}
@@ -140,7 +180,13 @@ export default function BlogList({
 
       <div className="flex flex-col gap-2">
         {posts.map((post) => (
-          <PostRow key={post._id} post={post} onDelete={deletePost} />
+          <PostRow
+            key={post._id}
+            post={post}
+            onDelete={deletePost}
+            onEdit={openEdit}
+            loadingEdit={loadingEdit === post._id}
+          />
         ))}
         {posts.length === 0 && (
           <p className="text-gray-400 text-sm py-4 text-center">אין מאמרים עדיין</p>
@@ -150,7 +196,17 @@ export default function BlogList({
   );
 }
 
-function PostRow({ post, onDelete }: { post: BlogItem; onDelete: (id: string) => void }) {
+function PostRow({
+  post,
+  onDelete,
+  onEdit,
+  loadingEdit,
+}: {
+  post: BlogItem;
+  onDelete: (id: string) => void;
+  onEdit: (id: string) => void;
+  loadingEdit: boolean;
+}) {
   const [, startTransition] = useTransition();
   return (
     <div className="card px-4 py-3 flex items-center gap-3">
@@ -163,6 +219,13 @@ function PostRow({ post, onDelete }: { post: BlogItem; onDelete: (id: string) =>
         </p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={() => onEdit(post._id)}
+          disabled={loadingEdit}
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-50"
+        >
+          <Pencil size={15} />
+        </button>
         <a
           href={`/blog/${post._id}`}
           target="_blank"

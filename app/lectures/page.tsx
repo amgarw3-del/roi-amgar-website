@@ -32,10 +32,11 @@ const audiences = [
 ];
 
 export default async function LecturesPage() {
-  const [lectures, testimonials, gallery] = await Promise.all([
+  const [lectures, testimonials, gallery, faqs] = await Promise.all([
     client.fetch(queries.allLectures).catch(() => []),
     client.fetch(queries.allTestimonials).catch(() => []),
     client.fetch(queries.allLectureGallery).catch(() => []),
+    client.fetch(queries.allLectureFaqs).catch(() => []),
   ]);
 
   const heroWhatsapp = buildLectureInquiryUrl();
@@ -204,7 +205,7 @@ export default async function LecturesPage() {
           שאלות נפוצות
         </h2>
         <div className="max-w-2xl mx-auto">
-          <LectureFAQ />
+          <LectureFAQ faqs={faqs} />
         </div>
       </section>
 

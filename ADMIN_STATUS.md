@@ -1,83 +1,78 @@
 # סטטוס לוח מנהל — אתר הרב רועי אמגר
 
-## עדכון אחרון: 2026-04-26
+## עדכון אחרון: 2026-04-29
 
 ---
 
 ## מה הושלם ✅
 
 ### Phase 1 — ליבה
-- **Auth:** Google OAuth ידני — `api/admin/google-auth` + `api/admin/google-callback`
-- **Layout:** sidebar עברי RTL, מובייל, `SiteShell` מבודד מהאתר הציבורי
+- **Auth:** Google OAuth ידני
+- **Layout:** sidebar עברי RTL, מובייל, `SiteShell`
 - **Dashboard:** KPIs + פעולות מהירות
-- **סרטונים:** ניהול מלא + שדה `hidden` (הסתרה ללא עצירת סנכרון)
-- **דברי תורה:** CRUD + AI summarize (Claude Sonnet + prompt caching)
+- **סרטונים:** CRUD מלא + `hidden` toggle + sync
+- **דברי תורה:** CRUD + AI summarize
 - **שאל את הרב:** תור שאלות + עורך תשובה + toggle פרסום
-- **קטגוריות:** צפייה + מונה פריטים
+- **קטגוריות:** CRUD מלא
+- **מאמרים:** CRUD מלא (כולל Edit)
+- **ניוזלטר:** עורך + שליחה + ניהול מנויים + ייצוא CSV
 
 ### Phase 2 — שיווק והפצה
-- **ניוזלטר:** `/admin/newsletter` — רשימת מנויים + עורך + שליחה דרך Gmail
-- **שיתוף חברתי:** כפתור Share2 בכל דבר תורה מפורסם → modal עם גרסאות וואטסאפ + אינסטגרם (Claude Haiku)
-- **מאמרים:** `/admin/content/blog` — CRUD לפוסטים
-- **Vercel Analytics:** `@vercel/analytics` מותקן + `<Analytics />` ב-layout.tsx
+- **שיתוף חברתי:** Share modal (Claude Haiku) על כל דבר תורה
+- **Vercel Analytics**
+
+### Phase 3 — ניהול תוכן ויזואלי (חדש)
+- **הרצאות:** ניהול מלא — הרצאות + המלצות + גלריה + FAQ (4 טאבים)
+- **עמוד הבית:** עורך Hero (כותרת/תת/תמונה/CTA) + סידור בלוקים עם ↑/↓ + הסתרה/הצגה
 
 ---
 
-## ENV vars שצריך להוסיף ב-Vercel
+## ENV vars (ב-Vercel)
 
 ```
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 ADMIN_EMAILS=amgarw3@gmail.com
+NEXT_PUBLIC_SANITY_PROJECT_ID=...
+SANITY_API_TOKEN=...   (token עם הרשאות write)
 ```
-
-## הגדרת Google OAuth (חד-פעמי)
-1. https://console.cloud.google.com/ → APIs & Services → Credentials
-2. Create OAuth 2.0 Client ID (Web Application)
-3. Authorized redirect URIs:
-   - `https://website-seven-kappa-25.vercel.app/api/admin/google-callback`
-   - `http://localhost:3000/api/admin/google-callback`
 
 ---
 
 ## ניווט Sidebar (סדר)
 1. דשבורד
-2. סרטונים (`/admin/content/videos`)
-3. דברי תורה (`/admin/content/divrei-tora`)
-4. מאמרים (`/admin/content/blog`)
-5. שאל את הרב (`/admin/content/qna`)
-6. קטגוריות (`/admin/content/categories`)
-7. ניוזלטר (`/admin/newsletter`)
+2. עמוד הבית (`/admin/content/homepage`)
+3. סרטונים (`/admin/content/videos`)
+4. דברי תורה (`/admin/content/divrei-tora`)
+5. מאמרים (`/admin/content/blog`)
+6. שאל את הרב (`/admin/content/qna`)
+7. הרצאות (`/admin/content/lectures`)
+8. קטגוריות (`/admin/content/categories`)
+9. ניוזלטר (`/admin/newsletter`)
 
 ---
 
-## API Routes
+## API Routes (חדשים בעדכון זה)
 ```
-/api/admin/google-auth         ← redirect לGoogle
-/api/admin/google-callback     ← קבלת callback מGoogle
-/api/admin/auth                ← (ישן, לא בשימוש)
-/api/admin/session             ← בדיקת session
-/api/admin/logout              ← התנתקות
-/api/admin/toggle-hidden       ← הסתרת/הצגת סרטון
-/api/admin/summarize           ← AI סיכום דבר תורה
-/api/admin/social-adapt        ← AI גרסאות וואטסאפ/אינסטגרם
-/api/admin/send-newsletter     ← שליחת ניוזלטר לכל המנויים
-/api/admin/create-dvar         ← יצירת דבר תורה
-/api/admin/create-blog         ← יצירת מאמר
-/api/admin/publish             ← פרסום פריט (id או _id)
-/api/admin/delete              ← מחיקה
-/api/admin/answer-qna          ← תשובה + פרסום שאלה
-/api/admin/retag-subtopics     ← שיוך מחדש אוטומטי
+/api/admin/upload-image          ← העלאת תמונה ל-Sanity assets
+/api/admin/save-lecture          ← create/update הרצאה
+/api/admin/save-testimonial      ← create/update המלצה
+/api/admin/save-gallery-image    ← create/update תמונת גלריה
+/api/admin/save-faq              ← create/update שאלה נפוצה (lectureFaq)
+/api/admin/save-video            ← create/update סרטון
+/api/admin/update-blog           ← עריכת מאמר
+/api/admin/get-blog              ← טעינת מאמר לעריכה (כולל body כטקסט)
+/api/admin/save-category         ← create/update קטגוריה
+/api/admin/save-subscriber       ← create/update מנוי
+/api/admin/export-subscribers    ← ייצוא CSV
+/api/admin/save-homepage         ← שמירת singleton עמוד הבית
 ```
 
 ---
 
-## Phase 3 — עוד לא בוצע
-- [ ] אנליטיקס dashboard (Google Analytics 4 / Vercel Analytics UI)
-- [ ] היסטוריית גרסאות עם diff
-- [ ] מצב תחזוקה
-- [ ] גיבוי יומי אוטומטי
-- [ ] ניטור שגיאות (Sentry)
+## סכמות חדשות ב-Sanity
+- `lectureFaq` — שאלות נפוצות (question, answer, order, published)
+- `homepage` — singleton עמוד הבית (heroTitle, heroSubtitle, heroImage, heroCtaLabel, heroCtaHref, blocks[])
 
 ---
 
@@ -85,30 +80,40 @@ ADMIN_EMAILS=amgarw3@gmail.com
 ```
 website/
 ├── app/admin/
-│   ├── layout.tsx
-│   ├── page.tsx                        ← dashboard
+│   ├── page.tsx
 │   ├── login/page.tsx
-│   ├── newsletter/page.tsx
+│   ├── newsletter/page.tsx              ← +SubscribersList
 │   └── content/
-│       ├── videos/page.tsx
+│       ├── homepage/page.tsx            ← חדש
+│       ├── videos/page.tsx              ← +categories
 │       ├── divrei-tora/page.tsx
 │       ├── blog/page.tsx
 │       ├── qna/page.tsx
-│       └── categories/page.tsx
+│       ├── lectures/page.tsx            ← חדש (4 טאבים)
+│       └── categories/page.tsx          ← מ-view-only ל-CRUD
 ├── components/admin/
-│   ├── AdminSidebar.tsx
-│   ├── VideosList.tsx
-│   ├── DivreiToraList.tsx              ← כולל Share modal
-│   ├── BlogList.tsx
+│   ├── AdminSidebar.tsx                 ← +הרצאות, עמוד הבית
+│   ├── VideosList.tsx                   ← +CRUD
+│   ├── DivreiToraList.tsx
+│   ├── BlogList.tsx                     ← +Edit
 │   ├── QnaList.tsx
+│   ├── CategoriesList.tsx               ← חדש
+│   ├── LecturesPanel.tsx                ← חדש (Lectures+Testimonials+Gallery+FAQ)
+│   ├── SubscribersList.tsx              ← חדש
+│   ├── HomepageEditor.tsx               ← חדש
 │   └── NewsletterCompose.tsx
-├── app/api/admin/
-│   ├── google-auth/ google-callback/
-│   ├── toggle-hidden/ summarize/
-│   ├── social-adapt/ send-newsletter/
-│   ├── create-dvar/ create-blog/
-│   ├── publish/ delete/ answer-qna/
-│   └── retag-subtopics/
-├── sanity/schema/video.ts              ← שדה hidden
-└── sanity/client.ts                    ← queries מסננים hidden!=true
+├── sanity/schema/
+│   ├── lectureFaq.ts                    ← חדש
+│   ├── homepage.ts                      ← חדש
+│   └── index.ts                         ← +imports
+└── app/page.tsx                         ← רנדר לפי orderedBlocks מ-Sanity
 ```
+
+---
+
+## Phase 4 — לעתיד (לא בוצע)
+- [ ] drag-and-drop אמיתי לבלוקים בעמוד הבית (כיום ↑/↓)
+- [ ] אנליטיקס dashboard
+- [ ] היסטוריית גרסאות
+- [ ] Sentry / ניטור שגיאות
+- [ ] גיבוי יומי

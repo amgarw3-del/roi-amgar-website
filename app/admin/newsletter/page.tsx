@@ -1,6 +1,7 @@
 import { createClient } from "@sanity/client";
 import type { Metadata } from "next";
 import NewsletterCompose from "@/components/admin/NewsletterCompose";
+import SubscribersList, { type Subscriber } from "@/components/admin/SubscribersList";
 
 export const metadata: Metadata = { title: "ניוזלטר" };
 export const dynamic = "force-dynamic";
@@ -14,8 +15,8 @@ const sanity = createClient({
 });
 
 export default async function AdminNewsletterPage() {
-  const subscribers = await sanity.fetch<{ _id: string; email: string; name?: string; createdAt?: string }[]>(
-    `*[_type == "subscriber" && defined(email)] | order(createdAt desc) { _id, email, name, createdAt }`
+  const subscribers = await sanity.fetch<Subscriber[]>(
+    `*[_type == "subscriber" && defined(email)] | order(createdAt desc) { _id, email, name, phone, createdAt }`
   );
 
   return (
@@ -29,24 +30,7 @@ export default async function AdminNewsletterPage() {
         </span>
       </div>
 
-      {/* רשימת מנויים */}
-      <section className="card p-5 mb-6">
-        <h2 className="font-bold mb-3 text-sm text-gray-500 uppercase tracking-wide">מנויים</h2>
-        {subscribers.length === 0 ? (
-          <p className="text-gray-400 text-sm">אין מנויים עדיין</p>
-        ) : (
-          <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto">
-            {subscribers.map((s) => (
-              <div key={s._id} className="flex items-center justify-between text-sm py-1 border-b border-gray-50">
-                <span className="font-medium">{s.name || "—"}</span>
-                <span className="text-gray-400 text-xs">{s.email}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* עורך ניוזלטר */}
+      <SubscribersList subscribers={subscribers} />
       <NewsletterCompose subscriberCount={subscribers.length} />
     </div>
   );

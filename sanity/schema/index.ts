@@ -9,6 +9,8 @@ import { subTopicSchema } from "./subTopic";
 import { lectureSchema } from "./lecture";
 import { testimonialSchema } from "./testimonial";
 import { lectureGalleryImageSchema } from "./lectureGalleryImage";
+import { lectureFaqSchema } from "./lectureFaq";
+import { homepageSchema } from "./homepage";
 
 export const schemaTypes = [
   categorySchema,
@@ -22,4 +24,6 @@ export const schemaTypes = [
   lectureSchema,
   testimonialSchema,
   lectureGalleryImageSchema,
+  lectureFaqSchema,
+  homepageSchema,
 ];

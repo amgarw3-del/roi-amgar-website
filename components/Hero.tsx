@@ -1,7 +1,62 @@
 import Link from "next/link";
 
-export default function Hero() {
+interface HeroProps {
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string | null;
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+
+export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: HeroProps = {}) {
   const serif = `'Frank Ruhl Libre', var(--font-frank), serif`;
+  const customMode = Boolean(title || subtitle || imageUrl);
+
+  if (customMode) {
+    return (
+      <section
+        style={{ background: "var(--color-bg-hero)", paddingTop: "80px", paddingBottom: "64px" }}
+      >
+        <div className="container">
+          <div className="hero-grid">
+            <div>
+              <p style={{ fontSize: "13px", color: "var(--color-ochre)", letterSpacing: "0.2em", fontWeight: 600, textTransform: "uppercase", marginBottom: "20px" }}>
+                ◆ תורה לחיים
+              </p>
+              {title && (
+                <h1 style={{ fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 800, letterSpacing: "-0.025em", color: "var(--color-ink)", lineHeight: 1.05, marginBottom: "24px", fontFamily: "var(--font-heebo)" }}>
+                  {title}
+                </h1>
+              )}
+              {subtitle && (
+                <p style={{ fontSize: "20px", color: "var(--color-muted-cool)", maxWidth: "520px", lineHeight: 1.7, marginBottom: "36px" }}>
+                  {subtitle}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-4">
+                <Link href={ctaHref || "/videos"} className="btn-primary">
+                  {ctaLabel || "צפו בשיעורים ←"}
+                </Link>
+                <Link href="/shaal" style={{ display: "inline-flex", alignItems: "center", fontSize: "16px", fontWeight: 600, color: "var(--color-ink)", padding: "16px 4px", borderBottom: "1.5px solid var(--color-ink)" }}>
+                  שאל את הרב →
+                </Link>
+              </div>
+            </div>
+            <div style={{ position: "relative" }}>
+              <div style={{ position: "relative", aspectRatio: "4/5", borderRadius: "24px", overflow: "hidden", maxWidth: "420px", margin: "0 auto" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageUrl || "/rabbi.jpg"} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <style>{`
+          .hero-grid { display: flex; flex-direction: column-reverse; gap: 32px; }
+          @media (min-width: 768px) { .hero-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 80px; align-items: center; } }
+        `}</style>
+      </section>
+    );
+  }
 
   return (
     <section

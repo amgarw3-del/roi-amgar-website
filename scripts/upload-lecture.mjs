@@ -15,37 +15,41 @@ const client = createClient({
   useCdn: false,
 });
 
-const [, , imagePath, ...rest] = process.argv;
-if (!imagePath) {
-  console.error("Usage: node upload-lecture.mjs <image-path>");
+const args = process.argv.slice(2);
+const get = (flag) => {
+  const i = args.indexOf(flag);
+  return i >= 0 ? args[i + 1] : null;
+};
+
+const imagePath = get("--image");
+const title = get("--title");
+const summary = get("--summary");
+const order = parseInt(get("--order") || "0", 10);
+
+if (!imagePath || !title || !summary) {
+  console.error(
+    'Usage: node upload-lecture.mjs --image <path> --title "<title>" --summary "<summary>" [--order N]'
+  );
   process.exit(1);
 }
 
-const TITLE = "אור בחשיכה 🕯️";
-const SUMMARY = `הרצאה מרתקת על צדקת הדרך, אמונה וביטחון במלחמת חרבות ברזל. מדורות קודמים ועד ימינו אנו, בשילוב מצגת, מסרים מחזקים וסיפורים אישיים מהמלחמה.
-
-הרב רועי אמגר, רב צבאי ולוחם ששירת למעלה מ-400 ימי מילואים במלחמת חרבות ברזל, יוצא לספר את הרגעים האישיים, דרך סיפורים על גיבורים, ודרך ההיסטוריה והתורה של עם ישראל.
-
-מתאים לכל השנה ובהתאמה לחגים, מועדים ויום הזיכרון.`;
-
-console.log(`Uploading image from: ${imagePath}`);
+console.log(`Uploading: ${path.basename(imagePath)}`);
 const buffer = fs.readFileSync(imagePath);
 const asset = await client.assets.upload("image", buffer, {
   filename: path.basename(imagePath),
 });
-console.log(`✓ Image uploaded: ${asset._id}`);
+console.log(`✓ Image: ${asset._id}`);
 
 const doc = await client.create({
   _type: "lecture",
-  title: TITLE,
-  summary: SUMMARY,
+  title,
+  summary,
   flyer: {
     _type: "image",
     asset: { _type: "reference", _ref: asset._id },
-    alt: TITLE,
+    alt: title,
   },
-  order: 1,
+  order,
   published: true,
 });
-console.log(`✓ Lecture created: ${doc._id}`);
-console.log(`Visit: https://website-seven-kappa-25.vercel.app/lectures`);
+console.log(`✓ Lecture: ${doc._id} ("${title}")`);

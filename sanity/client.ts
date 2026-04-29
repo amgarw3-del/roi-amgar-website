@@ -145,4 +145,15 @@ export const queries = {
   allLectureGallery: `*[_type == "lectureGalleryImage"] | order(order asc, _createdAt desc) {
     _id, image, caption
   }`,
+
+  // שאלות נפוצות בעמוד ההרצאות
+  allLectureFaqs: `*[_type == "lectureFaq" && published == true] | order(order asc, _createdAt desc) {
+    _id, question, answer
+  }`,
+
+  // הגדרות עמוד הבית
+  homepage: `*[_type == "homepage"][0] {
+    heroTitle, heroSubtitle, heroImage, heroCtaLabel, heroCtaHref,
+    blocks
+  }`,
 };
