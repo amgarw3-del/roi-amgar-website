@@ -12,11 +12,10 @@ export interface YouTubeVideo {
 
 const CHANNEL_ID = "UCpep2f42VluYwMqZ4kXiQTA";
 
-// סטטוס סנכרון אחרון — נקרא ע"י endpoint health-check
 type SyncSource = "api" | "rss" | "none";
 type SyncStatus = {
   lastSource: SyncSource;
-  lastSuccessAt: number; // epoch ms
+  lastSuccessAt: number;
   lastErrorMessage: string | null;
 };
 const _syncStatus: SyncStatus = {
@@ -28,14 +27,33 @@ export function getYouTubeSyncStatus(): SyncStatus {
   return { ..._syncStatus };
 }
 
-// זורק חריגה במקום להחזיר [] בכשל — Next.js לא מאחסן rejections ב-unstable_cache
-// כך אין יותר "הרעלת cache" של 24ש כשהמפתח/קוואטה זמנית נופלים.
-async function _fetchYouTubeVideos(
-  maxResults: number,
-  videoDuration?: "short" | "medium" | "long"
-): Promise<YouTubeVideo[]> {
-  // בסביבת dev — דולגים על ה-API כדי לחסוך quota (כל restart מכלה 300 יחידות).
-  // ה-RSS fallback יטפל בזה חינם.
+// שולף את ה-uploads playlist ID של הערוץ — עולה 1 יחידת quota, נשמר 24ש
+async function _getUploadsPlaylistId(): Promise<string> {
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key) throw new Error("YOUTUBE_API_KEY missing");
+  const res = await fetch(
+    `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${CHANNEL_ID}&key=${key}`
+  );
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`YouTube channels API ${res.status}: ${body.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  const uploadsId: string =
+    data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads ?? "";
+  if (!uploadsId) throw new Error("YouTube: no uploads playlist found");
+  return uploadsId;
+}
+
+const cachedGetUploadsPlaylistId = unstable_cache(
+  _getUploadsPlaylistId,
+  ["youtube-uploads-id-v1"],
+  { revalidate: 86400 }
+);
+
+// שולף 50 הסרטונים האחרונים מ-uploads playlist — עולה 1 יחידת quota בלבד (במקום 100)
+async function _fetchPlaylistVideos(): Promise<YouTubeVideo[]> {
+  // בסביבת dev — דולגים על ה-API כדי לחסוך quota (כל restart מכלה יחידות).
   if (process.env.NODE_ENV === "development") {
     throw new Error("YouTube API skipped in dev (quota conservation)");
   }
@@ -43,57 +61,53 @@ async function _fetchYouTubeVideos(
   const key = process.env.YOUTUBE_API_KEY;
   if (!key) throw new Error("YOUTUBE_API_KEY missing");
 
+  const uploadsId = await cachedGetUploadsPlaylistId();
+
   const params = new URLSearchParams({
-    part: "snippet",
-    channelId: CHANNEL_ID,
-    type: "video",
-    order: "date",
-    maxResults: String(maxResults),
+    part: "snippet,contentDetails",
+    playlistId: uploadsId,
+    maxResults: "50",
     key,
-    ...(videoDuration ? { videoDuration } : {}),
   });
 
   const res = await fetch(
-    `https://www.googleapis.com/youtube/v3/search?${params}`
+    `https://www.googleapis.com/youtube/v3/playlistItems?${params}`
   );
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`YouTube API ${res.status}: ${body.slice(0, 200)}`);
+    throw new Error(`YouTube playlistItems ${res.status}: ${body.slice(0, 200)}`);
   }
   const data = await res.json();
 
-  const items: YouTubeVideo[] = (data.items ?? []).map(
-    (item: {
-      id: { videoId: string };
-      snippet: {
-        title: string;
-        thumbnails: { high?: { url: string }; medium?: { url: string } };
-        publishedAt: string;
-      };
-    }) => ({
-      videoId: item.id.videoId,
-      title: decodeHTMLEntities(item.snippet.title),
+  const items: YouTubeVideo[] = [];
+  for (const item of data.items ?? []) {
+    const videoId =
+      item.contentDetails?.videoId ?? item.snippet?.resourceId?.videoId;
+    if (!videoId) continue;
+    items.push({
+      videoId,
+      title: decodeHTMLEntities(item.snippet?.title ?? ""),
       thumbnail:
-        item.snippet.thumbnails?.high?.url ||
-        item.snippet.thumbnails?.medium?.url ||
-        `https://img.youtube.com/vi/${item.id.videoId}/hqdefault.jpg`,
-      publishedAt: item.snippet.publishedAt,
-    })
-  );
+        item.snippet?.thumbnails?.high?.url ||
+        item.snippet?.thumbnails?.medium?.url ||
+        `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      publishedAt:
+        item.contentDetails?.videoPublishedAt ?? item.snippet?.publishedAt ?? "",
+    });
+  }
 
-  if (items.length === 0) throw new Error("YouTube API returned 0 items");
+  if (items.length === 0) throw new Error("YouTube playlist returned 0 items");
   return items;
 }
 
-// cache ל-שעה — בכשלון API מנסים שוב כל שעה (לא 24)
-// כך כשהמפתח חוזר לעבוד, הסנכרון חוזר תוך שעה אוטומטית.
-const cachedFetchYouTubeVideos = unstable_cache(
-  _fetchYouTubeVideos,
-  ["youtube-videos-v3"],
+// cache שעה — קריאות חוזרות ממטמון, ללא שחיקת quota
+const cachedFetchPlaylistVideos = unstable_cache(
+  _fetchPlaylistVideos,
+  ["youtube-playlist-v2"],
   { revalidate: 3600 }
 );
 
-// RSS — חינמי, ללא מפתח, ללא quota. מתרענן כל שעה.
+// RSS — חינמי, ללא מפתח, ללא quota. גיבוי לשכבה הראשונה.
 const cachedFetchRSS = unstable_cache(
   fetchRSSVideos,
   ["youtube-rss-v1"],
@@ -101,84 +115,73 @@ const cachedFetchRSS = unstable_cache(
 );
 
 /**
- * שליפת סרטונים בשתי שכבות הגנה:
- * 1. YouTube Data API (מחזיר 50, מסונן ב-duration). אם נכשל →
- * 2. RSS feed (חינמי, 15 סרטונים אחרונים, ללא duration — סינון לפי כותרת).
+ * שליפת סרטונים בשתי שכבות:
+ * 1. playlistItems API — 1 יחידת quota ל-50 סרטונים (במקום search.list שעלה 100).
+ *    אם נכשל →
+ * 2. RSS feed — חינמי לחלוטין, 15 סרטונים אחרונים.
  *
- * אם שתיהן נופלות → מערך ריק (האתר ימשיך לעבוד עם שאר התוכן).
- * הסטטוס נשמר ב-_syncStatus וניתן לקריאה דרך /api/cron/youtube-health.
+ * סינון לפי duration מתבצע לוקאלית לפי כותרת (isLikelyShort).
+ * אם הסינון מחזיר ריק — מחזירים את כל הסרטונים (עדיף משהו על פני ריק).
  */
 export async function fetchYouTubeVideos(
   maxResults: number,
   videoDuration?: "short" | "medium" | "long"
 ): Promise<YouTubeVideo[]> {
-  // שכבה 1: API
+  let allVideos: YouTubeVideo[] | null = null;
+
+  // שכבה 1: playlist API
   try {
-    const items = await cachedFetchYouTubeVideos(maxResults, videoDuration);
+    allVideos = await cachedFetchPlaylistVideos();
     _syncStatus.lastSource = "api";
     _syncStatus.lastSuccessAt = Date.now();
     _syncStatus.lastErrorMessage = null;
-    return items;
   } catch (e) {
     const msg = (e as Error).message;
     _syncStatus.lastErrorMessage = msg;
-    console.error("[youtube] API failed, falling back to RSS:", msg);
+    console.error("[youtube] playlist API failed, falling back to RSS:", msg);
   }
 
-  // שכבה 2: RSS (כשהשכבה הראשונה נכשלה)
-  try {
-    const rssItems = await cachedFetchRSS();
-    _syncStatus.lastSource = "rss";
-    _syncStatus.lastSuccessAt = Date.now();
-
-    // RSS לא מבחין ב-duration. מסננים לפי כותרת, אבל אם הפילטר מחזיר ריק —
-    // מחזירים את כל הסרטונים האחרונים כ-fallback (עדיף משהו על פני ריק).
-    let filtered = rssItems;
-    if (videoDuration === "short") {
-      const shorts = rssItems.filter(isLikelyShort);
-      filtered = shorts.length > 0 ? shorts : rssItems;
-    } else if (videoDuration === "long" || videoDuration === "medium") {
-      const longs = rssItems.filter((v) => !isLikelyShort(v));
-      filtered = longs.length > 0 ? longs : rssItems;
+  // שכבה 2: RSS
+  if (!allVideos) {
+    try {
+      allVideos = await cachedFetchRSS();
+      _syncStatus.lastSource = "rss";
+      _syncStatus.lastSuccessAt = Date.now();
+    } catch (e) {
+      const msg = (e as Error).message;
+      _syncStatus.lastErrorMessage = `API+RSS both failed: ${msg}`;
+      console.error("[youtube] RSS fallback ALSO failed:", msg);
+      return [];
     }
-    return filtered.slice(0, maxResults);
-  } catch (e) {
-    const msg = (e as Error).message;
-    _syncStatus.lastErrorMessage = `API+RSS both failed: ${msg}`;
-    console.error("[youtube] RSS fallback ALSO failed:", msg);
   }
 
-  return [];
+  // סינון לפי duration לוקאלי — לפי כותרת
+  let filtered = allVideos;
+  if (videoDuration === "short") {
+    const shorts = allVideos.filter(isLikelyShort);
+    filtered = shorts.length > 0 ? shorts : allVideos;
+  } else if (videoDuration === "long" || videoDuration === "medium") {
+    const longs = allVideos.filter((v) => !isLikelyShort(v));
+    filtered = longs.length > 0 ? longs : allVideos;
+  }
+
+  return filtered.slice(0, maxResults);
 }
 
 /**
- * Fetch ALL videos from the channel via the uploads playlist.
- * Cheap: 1 quota unit per page of 50 videos (vs 100 units per page for search.list).
- * Used by the chatbot index — no `videoDuration` filter, returns the entire channel.
+ * כל סרטוני הערוץ — לאינדקס הצ'אטבוט.
+ * עם pagination עד 1000 סרטונים.
  */
 async function _fetchAllChannelVideos(): Promise<YouTubeVideo[]> {
   const key = process.env.YOUTUBE_API_KEY;
   if (!key) throw new Error("YOUTUBE_API_KEY missing");
 
-  // 1. Get the channel's uploads playlist ID
-  const chRes = await fetch(
-    `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${CHANNEL_ID}&key=${key}`
-  );
-  if (!chRes.ok) {
-    const body = await chRes.text().catch(() => "");
-    throw new Error(`YouTube channels API ${chRes.status}: ${body.slice(0, 200)}`);
-  }
-  const chData = await chRes.json();
-  const uploadsId: string =
-    chData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads ?? "";
-  if (!uploadsId) throw new Error("YouTube: no uploads playlist found");
+  const uploadsId = await cachedGetUploadsPlaylistId();
 
-  // 2. Page through the uploads playlist
   const out: YouTubeVideo[] = [];
   let pageToken: string | undefined;
-  const HARD_CAP = 1000; // safety: stop after 1000 videos / 20 pages
 
-  for (let i = 0; i < 20 && out.length < HARD_CAP; i++) {
+  for (let i = 0; i < 20 && out.length < 1000; i++) {
     const params = new URLSearchParams({
       part: "snippet,contentDetails",
       playlistId: uploadsId,
@@ -186,31 +189,34 @@ async function _fetchAllChannelVideos(): Promise<YouTubeVideo[]> {
       key,
       ...(pageToken ? { pageToken } : {}),
     });
-    let data;
     try {
       const res = await fetch(
         `https://www.googleapis.com/youtube/v3/playlistItems?${params}`
       );
       if (!res.ok) break;
-      data = await res.json();
+      const data = await res.json();
+      for (const item of data.items ?? []) {
+        const videoId =
+          item.contentDetails?.videoId ?? item.snippet?.resourceId?.videoId;
+        if (!videoId) continue;
+        out.push({
+          videoId,
+          title: decodeHTMLEntities(item.snippet?.title ?? ""),
+          thumbnail:
+            item.snippet?.thumbnails?.high?.url ||
+            item.snippet?.thumbnails?.medium?.url ||
+            `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+          publishedAt:
+            item.contentDetails?.videoPublishedAt ??
+            item.snippet?.publishedAt ??
+            "",
+        });
+      }
+      pageToken = data.nextPageToken;
+      if (!pageToken) break;
     } catch {
       break;
     }
-    for (const item of data.items ?? []) {
-      const videoId = item.contentDetails?.videoId ?? item.snippet?.resourceId?.videoId;
-      if (!videoId) continue;
-      out.push({
-        videoId,
-        title: decodeHTMLEntities(item.snippet?.title ?? ""),
-        thumbnail:
-          item.snippet?.thumbnails?.high?.url ||
-          item.snippet?.thumbnails?.medium?.url ||
-          `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-        publishedAt: item.contentDetails?.videoPublishedAt ?? item.snippet?.publishedAt,
-      });
-    }
-    pageToken = data.nextPageToken;
-    if (!pageToken) break;
   }
 
   if (out.length === 0) throw new Error("YouTube uploads playlist returned 0 items");
