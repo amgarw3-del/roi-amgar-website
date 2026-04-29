@@ -21,7 +21,7 @@ const PATHS: Record<string, string[]> = {
 export async function POST(req: NextRequest) {
   try {
     const { type } = (await req.json()) as { type?: string };
-    const paths = (type && PATHS[type]) ?? ["/"];
+    const paths: string[] = (type && PATHS[type]) || ["/"];
     paths.forEach((p) => revalidatePath(p));
     return NextResponse.json({ ok: true, revalidated: paths });
   } catch {
