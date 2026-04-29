@@ -2,7 +2,7 @@ import { client, queries } from "@/sanity/client";
 import TestimonialCard from "@/components/lectures/TestimonialCard";
 import GalleryGrid from "@/components/lectures/GalleryGrid";
 import { buildWeddingInquiryUrl } from "@/lib/whatsapp";
-import { Heart, Music, BookOpen, Clock, MapPin, Sparkles } from "lucide-react";
+import { Heart, Music, BookOpen, Clock, MapPin, GraduationCap } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -15,11 +15,11 @@ export const revalidate = 3600;
 
 const qualities = [
   { icon: Heart, label: "חיבור אמיתי", desc: "לא רק טקס — רגע של קדושה, שמחה ואהבה" },
-  { icon: BookOpen, label: "הכנה מעמיקה", desc: "פגישות הכנה אישיות עם הזוג לפני החופה" },
-  { icon: Music, label: "אווירה נעימה", desc: "טקס בסגנון קליל ומרגש, בלי לחץ" },
+  { icon: BookOpen, label: "הכנה מעמיקה", desc: "פגישת הכנה לפני החופה" },
+  { icon: Music, label: "אווירה מרגשת", desc: "טקס מרגש וסוחף" },
   { icon: Clock, label: "מותאם אישית", desc: "מתאים לדתיים, מסורתיים וחילונים" },
   { icon: MapPin, label: "כיסוי ארצי", desc: "מגיע לכל מקום בארץ" },
-  { icon: Sparkles, label: "מחויבות מלאה", desc: "מסירות, חוזק ואנושיות בכל טקס" },
+  { icon: GraduationCap, label: "הדרכת חתנים", desc: "מדריך חתנים מוסמך" },
 ];
 
 export default async function HupotPage() {
@@ -54,10 +54,10 @@ export default async function HupotPage() {
               color: "var(--color-bg-paper)",
             }}
           >
-            לא רק טקס — רגע של חיבור, קדושה, שמחה ואהבה
+            חופה מרגשת מותאמת אישית ובאווירה נעימה וצעירה
           </h1>
           <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto mb-8 leading-relaxed">
-            הרב רועי אמגר, רב נתניה, מלווה כל זוג בחום ובקשב — מפגישת ההכנה ועד הריקוד האחרון
+            הרב רועי אמגר מלווה זוגות מרישום הנישואים, עד החופה במאור פנים, בשמחה ובקדושה.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <a
