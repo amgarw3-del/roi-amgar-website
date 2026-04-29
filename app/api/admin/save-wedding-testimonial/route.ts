@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@sanity/client";
 
 export const dynamic = "force-dynamic";
@@ -41,9 +42,11 @@ export async function POST(req: NextRequest) {
       const patch = { ...data };
       if (!photoAssetId) delete patch.photo;
       await sanity.patch(_id).set(patch).commit();
+      revalidatePath("/hupot");
       return NextResponse.json({ ok: true, _id });
     } else {
       const doc = await sanity.create({ _type: "weddingTestimonial", ...data });
+      revalidatePath("/hupot");
       return NextResponse.json({ ok: true, _id: doc._id });
     }
   } catch (err) {

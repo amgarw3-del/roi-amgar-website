@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@sanity/client";
 
 export const dynamic = "force-dynamic";
@@ -43,12 +44,14 @@ export async function POST(req: NextRequest) {
       const patch = { ...data };
       if (!pdfAssetId) delete patch.pdfFile;
       await sanity.patch(_id).set(patch).commit();
+      revalidatePath("/sikkumim");
       return NextResponse.json({ ok: true, _id });
     } else {
       if (!pdfAssetId) {
         return NextResponse.json({ error: "קובץ PDF הוא שדה חובה ביצירה" }, { status: 400 });
       }
       const doc = await sanity.create({ _type: "pdfSummary", ...data });
+      revalidatePath("/sikkumim");
       return NextResponse.json({ ok: true, _id: doc._id });
     }
   } catch (err) {

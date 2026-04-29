@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@sanity/client";
 
 export const dynamic = "force-dynamic";
@@ -33,12 +34,14 @@ export async function POST(req: NextRequest) {
       const patch = { ...data };
       if (!imageAssetId) delete patch.image;
       await sanity.patch(_id).set(patch).commit();
+      revalidatePath("/hupot");
       return NextResponse.json({ ok: true, _id });
     } else {
       if (!imageAssetId) {
         return NextResponse.json({ error: "תמונה היא שדה חובה" }, { status: 400 });
       }
       const doc = await sanity.create({ _type: "weddingGalleryImage", ...data });
+      revalidatePath("/hupot");
       return NextResponse.json({ ok: true, _id: doc._id });
     }
   } catch (err) {
