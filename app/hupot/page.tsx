@@ -6,20 +6,20 @@ import { Heart, Music, BookOpen, Clock, MapPin, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "עריכת חופות",
+  title: "עריכת חופות | הרב רועי אמגר",
   description:
-    "הרב רועי אמגר עורך חופות — בחיבור, בשמחה ובקדושה. לתיאום ושאלות — פנו ישירות בוואטסאפ.",
+    "הרב רועי אמגר, רב נתניה — עורך חופות לדתיים, מסורתיים וחילונים. לא רק טקס — רגע של חיבור, קדושה, שמחה ואהבה. לתיאום: ישירות בוואטסאפ.",
 };
 
 export const revalidate = 3600;
 
 const qualities = [
-  { icon: Heart, label: "אישיות חמה", desc: "חיבור אמיתי לזוג ולמשפחה" },
-  { icon: BookOpen, label: "הכנה מעמיקה", desc: "פגישות הכנה לפני החופה" },
-  { icon: Music, label: "אווירה מרגשת", desc: "טקס שיישאר בזיכרון לנצח" },
-  { icon: Clock, label: "גמישות מלאה", desc: "התאמה לשעה ולסגנון שלכם" },
+  { icon: Heart, label: "חיבור אמיתי", desc: "לא רק טקס — רגע של קדושה, שמחה ואהבה" },
+  { icon: BookOpen, label: "הכנה מעמיקה", desc: "פגישות הכנה אישיות עם הזוג לפני החופה" },
+  { icon: Music, label: "אווירה נעימה", desc: "טקס בסגנון קליל ומרגש, בלי לחץ" },
+  { icon: Clock, label: "מותאם אישית", desc: "מתאים לדתיים, מסורתיים וחילונים" },
   { icon: MapPin, label: "כיסוי ארצי", desc: "מגיע לכל מקום בארץ" },
-  { icon: Sparkles, label: "ניסיון רב", desc: "עשרות זוגות מרוצים" },
+  { icon: Sparkles, label: "מחויבות מלאה", desc: "מסירות, חוזק ואנושיות בכל טקס" },
 ];
 
 export default async function HupotPage() {
@@ -54,10 +54,10 @@ export default async function HupotPage() {
               color: "var(--color-bg-paper)",
             }}
           >
-            חופה שתישאר בלב לנצח
+            לא רק טקס — רגע של חיבור, קדושה, שמחה ואהבה
           </h1>
           <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto mb-8 leading-relaxed">
-            הרב רועי אמגר מלווה זוגות מהטקס ועד הריקוד — בחיבור, בשמחה ובקדושה
+            הרב רועי אמגר, רב נתניה, מלווה כל זוג בחום ובקשב — מפגישת ההכנה ועד הריקוד האחרון
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <a
