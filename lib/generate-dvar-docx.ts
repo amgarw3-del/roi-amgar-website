@@ -43,20 +43,32 @@ async function patchRtlSettings(buffer: Buffer): Promise<Buffer> {
   const zip = await JSZip.loadAsync(buffer);
 
   // Force RTL + right-alignment on every paragraph in document.xml
+  // Also patch <w:sectPr> to add section-level RTL direction
   const docFile = zip.file("word/document.xml");
   if (docFile) {
     const xml = await docFile.async("string");
-    zip.file("word/document.xml", forceRtlOnAllParagraphs(xml));
+    const rtlPatched = forceRtlOnAllParagraphs(xml);
+    const sectPrPatched = rtlPatched.replace(/(<w:sectPr\b[^>]*>)/g, "$1<w:bidi/>");
+    zip.file("word/document.xml", sectPrPatched);
   }
 
   // Inject Hebrew language defaults into styles.xml (rPrDefault + pPrDefault)
+  // Also add explicit Normal style so heading styles don't override RTL alignment
   const stylesFile = zip.file("word/styles.xml");
   if (stylesFile) {
     const stylesXml = await stylesFile.async("string");
-    const patched = stylesXml.replace(
-      /<w:docDefaults>[\s\S]*?<\/w:docDefaults>/,
-      `<w:docDefaults><w:rPrDefault><w:rPr><w:rtl/><w:lang w:val="he-IL" w:eastAsia="he-IL" w:bidi="he-IL"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:pPrDefault></w:docDefaults>`
-    );
+    const normalStyle =
+      '<w:style w:type="paragraph" w:default="1" w:styleId="Normal">' +
+      '<w:name w:val="Normal"/>' +
+      '<w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr>' +
+      '<w:rPr><w:rtl/><w:lang w:val="he-IL" w:eastAsia="he-IL" w:bidi="he-IL"/></w:rPr>' +
+      "</w:style>";
+    const patched = stylesXml
+      .replace(
+        /<w:docDefaults>[\s\S]*?<\/w:docDefaults>/,
+        `<w:docDefaults><w:rPrDefault><w:rPr><w:rtl/><w:lang w:val="he-IL" w:eastAsia="he-IL" w:bidi="he-IL"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:pPrDefault></w:docDefaults>`
+      )
+      .replace("</w:docDefaults>", "</w:docDefaults>" + normalStyle);
     zip.file("word/styles.xml", patched);
   }
 
