@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronLeft, Clock, Share2 } from "lucide-react";
+import VideoTracker from "@/components/VideoTracker";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -61,6 +62,7 @@ export default async function ShiurPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
+      <VideoTracker _id={video._id} />
       <div className="container py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">

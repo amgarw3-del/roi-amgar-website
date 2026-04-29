@@ -12,14 +12,24 @@ const categoryLabels: Record<string, string> = {
 };
 
 interface PDFCardProps {
+  _id: string;
   title: string;
   description?: string;
   category?: string;
   pdfUrl: string;
 }
 
-export default function PDFCard({ title, description, category, pdfUrl }: PDFCardProps) {
+export default function PDFCard({ _id, title, description, category, pdfUrl }: PDFCardProps) {
   const categoryLabel = category ? (categoryLabels[category] ?? category) : null;
+
+  function handleDownload() {
+    fetch("/api/track-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ _id }),
+    }).catch(() => {});
+    window.open(pdfUrl, "_blank");
+  }
 
   return (
     <div className="card p-5 flex flex-col gap-3 h-full">
@@ -58,17 +68,14 @@ export default function PDFCard({ title, description, category, pdfUrl }: PDFCar
         <span className="text-xs font-medium" style={{ color: "var(--color-ochre)" }}>
           ✓ חינמי להורדה
         </span>
-        <a
-          href={pdfUrl}
-          download
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90"
+        <button
+          onClick={handleDownload}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90 cursor-pointer"
           style={{ background: "var(--color-navy)", color: "#faf3e2" }}
         >
           <Download size={15} />
           הורדה
-        </a>
+        </button>
       </div>
     </div>
   );

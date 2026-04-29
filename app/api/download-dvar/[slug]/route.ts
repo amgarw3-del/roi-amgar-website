@@ -20,6 +20,9 @@ export async function GET(
 
   const content = item.content ?? item.teaser ?? "";
   const buf = await generateDvarDocx(item.title, content);
+
+  client.patch(item._id).inc({ downloadCount: 1 }).commit().catch(() => {});
+
   const filename = encodeURIComponent(`${item.title}.docx`);
   const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
   const blob = new Blob([arrayBuffer], {

@@ -33,6 +33,14 @@ export const lectureSchema = defineType({
       type: "boolean",
       initialValue: true,
     }),
+    defineField({
+      name: "viewCount",
+      title: "מספר צפיות",
+      type: "number",
+      initialValue: 0,
+      readOnly: true,
+      description: "מתעדכן אוטומטית בכל כניסה לדף ההרצאות",
+    }),
   ],
   preview: { select: { title: "title", subtitle: "summary", media: "flyer" } },
 });

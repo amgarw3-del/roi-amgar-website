@@ -93,5 +93,13 @@ export const videoSchema = defineType({
       },
       initialValue: "free",
     }),
+    defineField({
+      name: "viewCount",
+      title: "מספר צפיות",
+      type: "number",
+      initialValue: 0,
+      readOnly: true,
+      description: "מתעדכן אוטומטית בכל כניסה לדף השיעור",
+    }),
   ],
 });

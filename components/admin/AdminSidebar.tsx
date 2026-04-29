@@ -19,6 +19,7 @@ import {
   Home,
   Heart,
   GraduationCap,
+  BarChart2,
 } from "lucide-react";
 
 const navItems = [
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/admin/content/sikkumim", label: "סיכומי רבנות", icon: GraduationCap },
   { href: "/admin/content/categories", label: "קטגוריות", icon: Tag },
   { href: "/admin/newsletter", label: "ניוזלטר", icon: Mail },
+  { href: "/admin/analytics", label: "אנליטיקס", icon: BarChart2 },
 ];
 
 export default function AdminSidebar() {

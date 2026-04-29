@@ -59,6 +59,7 @@ export default async function SikkumimPage() {
               }) => (
                 <PDFCard
                   key={s._id}
+                  _id={s._id}
                   title={s.title}
                   description={s.description}
                   category={s.category}

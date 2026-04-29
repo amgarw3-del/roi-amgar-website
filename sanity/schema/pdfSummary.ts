@@ -52,6 +52,14 @@ export const pdfSummarySchema = defineType({
       type: "boolean",
       initialValue: true,
     }),
+    defineField({
+      name: "downloadCount",
+      title: "מספר הורדות",
+      type: "number",
+      initialValue: 0,
+      readOnly: true,
+      description: "מתעדכן אוטומטית בכל הורדת PDF",
+    }),
   ],
   preview: {
     select: { title: "title", subtitle: "category" },
