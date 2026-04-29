@@ -16,7 +16,9 @@ function rtlRun(opts: ConstructorParameters<typeof TextRun>[0]) {
 }
 
 function rtlParagraph(opts: ConstructorParameters<typeof Paragraph>[0]) {
-  return new Paragraph({ bidirectional: true, alignment: AlignmentType.RIGHT, ...(opts as object) } as ConstructorParameters<typeof Paragraph>[0]);
+  // AlignmentType.START = "start" → in RTL paragraphs, "start" is the physical RIGHT side.
+  // Do NOT use AlignmentType.RIGHT here — in RTL context, "right" means trailing-edge = physical LEFT!
+  return new Paragraph({ bidirectional: true, alignment: AlignmentType.START, ...(opts as object) } as ConstructorParameters<typeof Paragraph>[0]);
 }
 
 function forceRtlOnAllParagraphs(documentXml: string): string {
@@ -30,9 +32,10 @@ function forceRtlOnAllParagraphs(documentXml: string): string {
     const fixed = inner.replace(/<w:pPr\b([^>]*)>([\s\S]*?)<\/w:pPr>/, (_m: string, pAttrs: string, pInner: string) => {
       // Strip any existing bidi / jc so we control placement.
       let cleaned = pInner.replace(/<w:bidi\s*\/?>/g, "").replace(/<w:jc\b[^/]*\/>/g, "");
-      // Insert bidi before jc; jc will be appended at the proper position (end of pPr is fine for jc).
-      // Place <w:bidi/> right at the start, and <w:jc w:val="right"/> at the very end of pPr.
-      cleaned = `<w:bidi/>${cleaned}<w:jc w:val="right"/>`;
+      // Place <w:bidi/> at the start (sets RTL direction).
+      // Use <w:jc w:val="start"/> — in RTL paragraphs, "start" = physical RIGHT.
+      // IMPORTANT: Never use w:val="right" with <w:bidi/> — in RTL, "right" = trailing edge = physical LEFT!
+      cleaned = `<w:bidi/>${cleaned}<w:jc w:val="start"/>`;
       return `<w:pPr${pAttrs}>${cleaned}</w:pPr>`;
     });
     return `<w:p${attrs}>${fixed}</w:p>`;
@@ -57,16 +60,18 @@ async function patchRtlSettings(buffer: Buffer): Promise<Buffer> {
   const stylesFile = zip.file("word/styles.xml");
   if (stylesFile) {
     const stylesXml = await stylesFile.async("string");
+    // IMPORTANT: Use w:val="start" (NOT "right") with <w:bidi/>.
+    // In RTL paragraphs, "start" = physical RIGHT. "right" = trailing edge = physical LEFT!
     const normalStyle =
       '<w:style w:type="paragraph" w:default="1" w:styleId="Normal">' +
       '<w:name w:val="Normal"/>' +
-      '<w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr>' +
+      '<w:pPr><w:bidi/><w:jc w:val="start"/></w:pPr>' +
       '<w:rPr><w:rtl/><w:lang w:val="he-IL" w:eastAsia="he-IL" w:bidi="he-IL"/></w:rPr>' +
       "</w:style>";
     const patched = stylesXml
       .replace(
         /<w:docDefaults>[\s\S]*?<\/w:docDefaults>/,
-        `<w:docDefaults><w:rPrDefault><w:rPr><w:rtl/><w:lang w:val="he-IL" w:eastAsia="he-IL" w:bidi="he-IL"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr></w:pPrDefault></w:docDefaults>`
+        `<w:docDefaults><w:rPrDefault><w:rPr><w:rtl/><w:lang w:val="he-IL" w:eastAsia="he-IL" w:bidi="he-IL"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:bidi/><w:jc w:val="start"/></w:pPr></w:pPrDefault></w:docDefaults>`
       )
       .replace("</w:docDefaults>", "</w:docDefaults>" + normalStyle);
     zip.file("word/styles.xml", patched);
