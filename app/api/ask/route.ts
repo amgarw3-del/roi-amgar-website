@@ -63,12 +63,12 @@ export async function POST(req: NextRequest) {
     if (!verifyData.success) return redirect(req, "/shaal?error=invalid");
   }
 
-  let name: string, question: string, questionType: string;
+  let name: string, question: string, phone: string;
   try {
     const formData = await req.formData();
     name = sanitize(formData.get("name")?.toString() ?? "");
     question = sanitize(formData.get("question")?.toString() ?? "");
-    questionType = sanitize(formData.get("questionType")?.toString() ?? "general");
+    phone = sanitize(formData.get("phone")?.toString() ?? "");
   } catch {
     return redirect(req, "/shaal?error=invalid");
   }
@@ -81,7 +81,8 @@ export async function POST(req: NextRequest) {
       _type: "qna",
       question,
       askerName: name || "אנונימי",
-      questionType,
+      questionType: "general",
+      phone: phone || undefined,
       isPublic: false,
     });
   } catch (err) {
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Email is best-effort — don't block the user if it fails.
-  sendQuestionNotification({ name: name || "אנונימי", question, questionType }).catch(
+  sendQuestionNotification({ name: name || "אנונימי", question, phone }).catch(
     (err) => console.error("[ask] email failed:", err)
   );
 

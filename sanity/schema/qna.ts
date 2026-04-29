@@ -25,6 +25,7 @@ export const qnaSchema = defineType({
       },
     }),
     defineField({ name: "askerName", title: "שם השואל (אופציונלי)", type: "string" }),
+    defineField({ name: "phone", title: "טלפון", type: "string" }),
     defineField({ name: "answer", title: "תשובה", type: "text" }),
     defineField({
       name: "answerType",

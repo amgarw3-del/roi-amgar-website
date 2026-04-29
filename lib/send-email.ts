@@ -1,16 +1,11 @@
 import nodemailer from "nodemailer";
 import { markdownToHtml } from "./markdown-utils";
 
-const QUESTION_TYPE_HE: Record<string, string> = {
-  general: "כללית (לצורך לימוד)",
-  "practical-ruling": "למעשה",
-  personal: "אישית (לא לפרסום)",
-};
 
 export async function sendQuestionNotification(params: {
   name: string;
   question: string;
-  questionType: string;
+  phone?: string;
 }) {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
@@ -22,7 +17,6 @@ export async function sendQuestionNotification(params: {
     auth: { user, pass },
   });
 
-  const typeLabel = QUESTION_TYPE_HE[params.questionType] ?? params.questionType;
   const adminUrl = "https://website-seven-kappa-25.vercel.app/admin/content/qna";
 
   await transporter.sendMail({
@@ -36,7 +30,7 @@ export async function sendQuestionNotification(params: {
         </div>
         <div style="padding:22px;background:#f9f9f9;border-radius:0 0 8px 8px">
           <p style="margin:0 0 8px"><strong>שם השואל:</strong> ${params.name}</p>
-          <p style="margin:0 0 16px"><strong>סוג:</strong> ${typeLabel}</p>
+          ${params.phone ? `<p style="margin:0 0 16px"><strong>טלפון:</strong> ${params.phone}</p>` : ""}
           <div style="background:white;border:1px solid #e5e5e5;border-radius:8px;padding:16px;line-height:1.7;white-space:pre-wrap">${params.question.replace(/</g, "&lt;")}</div>
           <div style="text-align:center;margin-top:24px">
             <a href="${adminUrl}"
