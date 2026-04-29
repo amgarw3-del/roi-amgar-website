@@ -47,7 +47,7 @@ function SectionHeading({ title }: { title: string }) {
 
 const DEFAULT_BLOCKS = [
   "hero", "donation", "subscribe", "categories", "videos", "shorts",
-  "newsletter", "lecturesStrip", "blog", "qna", "social",
+  "lecturesStrip", "blog", "qna", "social",
 ];
 
 interface HomepageDoc {
@@ -106,7 +106,6 @@ export default async function HomePage() {
     ),
     donation: <DonationWidget />,
     subscribe: <SubscribeBanner />,
-    newsletter: <NewsletterSignup />,
     lecturesStrip: <LecturesStrip />,
     categories: (
       <section className="section" style={{ background: "var(--color-bg-cream)" }}>
