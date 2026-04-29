@@ -38,6 +38,7 @@ export interface IndexableDoc {
   status?: string;
   hidden?: boolean;
   isPublic?: boolean;
+  published?: boolean;
   category?: CategoryRef | null;
   extraCategories?: CategoryRef[];
   subTopics?: SubTopicRef[];
@@ -48,6 +49,7 @@ export interface IndexableDoc {
   content?: string;
   body?: PortableTextBlock[];
   answer?: string;
+  description?: string;
 }
 
 export interface ExtractedDoc {
@@ -65,21 +67,28 @@ export interface ExtractedDoc {
 
 function getSlug(doc: IndexableDoc): string {
   if (typeof doc.slug === "string") return doc.slug;
-  return doc.slug?.current ?? "";
+  if (doc.slug?.current) return doc.slug.current;
+  return doc._id; // lecture + pdfSummary אין להם slug
 }
+
+const PDF_CATEGORY_LABELS: Record<string, string> = {
+  general:    "כללי",
+  shabbat:    "הלכות שבת",
+  kashrut:    "הלכות כשרות",
+  nidda:      "הלכות נידה",
+  evelut:     "הלכות אבלות",
+  "yoreh-deah": "הלכות יורה דעה",
+};
 
 function urlFor(type: string, slug: string): string {
   switch (type) {
-    case "video":
-      return `/shiur/${slug}`;
-    case "divarTora":
-      return `/dvar-tora/${slug}`;
-    case "blogPost":
-      return `/blog/${slug}`;
-    case "qna":
-      return `/shaal/${slug}`;
-    default:
-      return `/${slug}`;
+    case "video":      return `/shiur/${slug}`;
+    case "divarTora":  return `/dvar-tora/${slug}`;
+    case "blogPost":   return `/blog/${slug}`;
+    case "qna":        return `/shaal/${slug}`;
+    case "lecture":    return `/lectures`;
+    case "pdfSummary": return `/sikkumim`;
+    default:           return `/${slug}`;
   }
 }
 
@@ -118,6 +127,10 @@ export function extract(doc: IndexableDoc): ExtractedDoc | null {
     if (!doc.isPublic) return null;
   } else if (type === "blogPost") {
     // no status field — index all
+  } else if (type === "lecture") {
+    if (doc.published === false) return null;
+  } else if (type === "pdfSummary") {
+    if (doc.published === false) return null;
   } else {
     return null;
   }
@@ -137,6 +150,14 @@ export function extract(doc: IndexableDoc): ExtractedDoc | null {
   } else if (type === "qna") {
     title = doc.question ?? "";
     parts = [doc.question ?? "", doc.answer ?? ""];
+  } else if (type === "lecture") {
+    title = doc.title ?? "";
+    parts = [doc.title ?? "", doc.summary ?? ""];
+  } else if (type === "pdfSummary") {
+    title = doc.title ?? "";
+    const catKey = typeof doc.category === "string" ? doc.category : "";
+    const catLabel = PDF_CATEGORY_LABELS[catKey] ?? catKey;
+    parts = [doc.title ?? "", doc.description ?? "", catLabel];
   }
 
   const topics = topicLabels(doc);

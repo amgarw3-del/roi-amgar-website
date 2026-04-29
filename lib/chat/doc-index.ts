@@ -31,6 +31,8 @@ const TYPE_LABELS: Record<string, string> = {
   divarTora: "דבר תורה",
   blogPost: "מאמר",
   qna: "שאלה ותשובה",
+  lecture: "הרצאה",
+  pdfSummary: "סיכום למבחן רבנות",
   youtube: "שיעור ב-YouTube",
   youtubeShort: "שורט",
 };
@@ -45,9 +47,10 @@ interface Cache {
 let cache: Cache | null = null;
 let inflight: Promise<IndexedDoc[]> | null = null;
 
-const SANITY_QUERY = `*[_type in ["video","divarTora","blogPost","qna"]] {
+const SANITY_QUERY = `*[_type in ["video","divarTora","blogPost","qna","lecture","pdfSummary"]] {
   _id, _type, title, question, slug, status, hidden, isPublic, publishedAt,
   summary, transcript, teaser, content, body, answer,
+  published, description,
   category->{hebrewName, slug},
   extraCategories[]->{hebrewName, slug},
   subTopics[]->{hebrewName, slug, group}
