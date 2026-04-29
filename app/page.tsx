@@ -3,7 +3,6 @@ import Hero from "@/components/Hero";
 import VideoCard from "@/components/VideoCard";
 import BlogCard from "@/components/BlogCard";
 import QnACard from "@/components/QnACard";
-import NewsletterSignup from "@/components/NewsletterSignup";
 import VideoCarousel from "@/components/VideoCarousel";
 import SubscribeBanner from "@/components/SubscribeBanner";
 import DonationWidget from "@/components/DonationWidget";
