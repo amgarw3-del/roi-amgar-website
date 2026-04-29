@@ -15,3 +15,13 @@ export function buildGeneralInquiryUrl(): string {
   const text = "שלום הרב רועי, אשמח לפרטים נוספים.";
   return `https://wa.me/${PHONE}?text=${encodeURIComponent(text)}`;
 }
+
+export function buildWeddingInquiryUrl(): string {
+  const lines = [
+    "שלום הרב רועי, שמענו עליך ומעוניינים שתערוך לנו את החופה.",
+    "תאריך החתונה המתוכנן: ",
+    "מקום האירוע: ",
+    "אשמח לשמוע פרטים נוספים. תודה!",
+  ];
+  return `https://wa.me/${PHONE}?text=${encodeURIComponent(lines.join("\n"))}`;
+}

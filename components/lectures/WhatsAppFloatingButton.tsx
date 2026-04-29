@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { buildGeneralInquiryUrl, buildLectureInquiryUrl } from "@/lib/whatsapp";
+import { buildGeneralInquiryUrl, buildLectureInquiryUrl, buildWeddingInquiryUrl } from "@/lib/whatsapp";
 
 export default function WhatsAppFloatingButton() {
   const pathname = usePathname();
@@ -11,8 +11,13 @@ export default function WhatsAppFloatingButton() {
   }
 
   const isLectures = pathname.startsWith("/lectures");
-  const url = isLectures ? buildLectureInquiryUrl() : buildGeneralInquiryUrl();
-  const label = isLectures ? "הזמנת הרצאה" : "צור קשר";
+  const isHupot = pathname.startsWith("/hupot");
+  const url = isLectures
+    ? buildLectureInquiryUrl()
+    : isHupot
+    ? buildWeddingInquiryUrl()
+    : buildGeneralInquiryUrl();
+  const label = isLectures ? "הזמנת הרצאה" : isHupot ? "הזמנת עריכת חופה" : "צור קשר";
 
   return (
     <a

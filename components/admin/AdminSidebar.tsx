@@ -17,6 +17,8 @@ import {
   X,
   Mic,
   Home,
+  Heart,
+  GraduationCap,
 } from "lucide-react";
 
 const navItems = [
@@ -27,6 +29,8 @@ const navItems = [
   { href: "/admin/content/blog", label: "מאמרים", icon: FileText },
   { href: "/admin/content/qna", label: "שאל את הרב", icon: HelpCircle },
   { href: "/admin/content/lectures", label: "הרצאות", icon: Mic },
+  { href: "/admin/content/hupot", label: "עריכת חופות", icon: Heart },
+  { href: "/admin/content/sikkumim", label: "סיכומי רבנות", icon: GraduationCap },
   { href: "/admin/content/categories", label: "קטגוריות", icon: Tag },
   { href: "/admin/newsletter", label: "ניוזלטר", icon: Mail },
 ];

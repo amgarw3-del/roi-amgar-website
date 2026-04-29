@@ -11,6 +11,9 @@ import { testimonialSchema } from "./testimonial";
 import { lectureGalleryImageSchema } from "./lectureGalleryImage";
 import { lectureFaqSchema } from "./lectureFaq";
 import { homepageSchema } from "./homepage";
+import { pdfSummarySchema } from "./pdfSummary";
+import { weddingTestimonialSchema } from "./weddingTestimonial";
+import { weddingGalleryImageSchema } from "./weddingGalleryImage";
 
 export const schemaTypes = [
   categorySchema,
@@ -26,4 +29,7 @@ export const schemaTypes = [
   lectureGalleryImageSchema,
   lectureFaqSchema,
   homepageSchema,
+  pdfSummarySchema,
+  weddingTestimonialSchema,
+  weddingGalleryImageSchema,
 ];

@@ -12,6 +12,8 @@ const navLinks = [
   { href: "/dvar-tora", label: "דברי תורה" },
   { href: "/moadim", label: "מועדים" },
   { href: "/lectures", label: "הרצאות" },
+  { href: "/hupot", label: "עריכת חופות" },
+  { href: "/sikkumim", label: "סיכומי רבנות" },
   { href: "/shaal", label: 'שו"ת בהלכה' },
 ];
 

@@ -156,4 +156,19 @@ export const queries = {
     heroTitle, heroSubtitle, heroImage, heroCtaLabel, heroCtaHref,
     blocks
   }`,
+
+  // סיכומים למבחני רבנות
+  allPdfSummaries: `*[_type == "pdfSummary" && published == true] | order(order asc, _createdAt desc) {
+    _id, title, description, category, "pdfUrl": pdfFile.asset->url, order
+  }`,
+
+  // גלריית חופות
+  allWeddingGallery: `*[_type == "weddingGalleryImage"] | order(order asc, _createdAt desc) {
+    _id, image, caption
+  }`,
+
+  // המלצות מחתן וכלה
+  allWeddingTestimonials: `*[_type == "weddingTestimonial"] | order(order asc, _createdAt desc) {
+    _id, quote, name, role, photo
+  }`,
 };
