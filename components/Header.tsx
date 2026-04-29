@@ -7,13 +7,12 @@ import Logo from "./Logo";
 
 const navLinks = [
   { href: "/parasha", label: "פרשת שבוע" },
-  { href: "/halacha", label: "הלכה" },
   { href: "/emuna", label: "אמונה" },
   { href: "/videos", label: "שיעורים וחיזוקים בוידאו" },
   { href: "/dvar-tora", label: "דברי תורה" },
   { href: "/moadim", label: "מועדים" },
   { href: "/lectures", label: "הרצאות" },
-  { href: "/shaal", label: 'שו"ת עם הרב' },
+  { href: "/shaal", label: 'שו"ת בהלכה' },
 ];
 
 export default function Header() {

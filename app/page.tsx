@@ -15,7 +15,7 @@ export const revalidate = 3600; // ISR כל שעה — נתוני YouTube נשמ
 
 const categories = [
   { href: "/parasha", label: "פרשת שבוע", emoji: "📖", desc: "שיעורים ודברי תורה לפרשה" },
-  { href: "/halacha", label: "הלכה", emoji: "⚖️", desc: "שאלות ותשובות הלכתיות" },
+  { href: "/shaal", label: "הלכה", emoji: "⚖️", desc: "שאלות ותשובות הלכתיות" },
   { href: "/emuna", label: "אמונה", emoji: "✡️", desc: "מחשבה ועומק רוחני" },
   { href: "/videos", label: "רואים תורה", emoji: "⚡", desc: "לשיעורים וחיזוקים בוידאו" },
   { href: "/moadim", label: "מועדים", emoji: "🕎", desc: "לפי לוח השנה העברי" },
