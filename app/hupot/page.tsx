@@ -137,7 +137,7 @@ export default async function HupotPage() {
               className="text-2xl md:text-3xl font-bold text-center mb-8"
               style={{ color: "var(--color-navy)" }}
             >
-              מה אמרו זוגות שחגגו איתנו
+              המלצות מחופות שערכתי
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
               {testimonials.map(
@@ -172,10 +172,10 @@ export default async function HupotPage() {
               color: "var(--color-bg-paper)",
             }}
           >
-            רוצים שנעדוך את החופה?
+            רוצים שאערוך לכם את החופה?
           </h2>
           <p className="text-white/80 mb-6">
-            שלחו הודעה ונשמח לתאם פגישת היכרות.
+            שלחו הודעה ואשמח לתאם פגישת היכרות
           </p>
           <a
             href={weddingWhatsapp}
