@@ -17,11 +17,11 @@ const content = [
 ];
 
 const social = [
-  { label: "YouTube", href: "https://www.youtube.com/channel/UCpep2f42VluYwMqZ4kXiQTA" },
-  { label: "Instagram", href: "https://instagram.com/harav_roi_amgar" },
-  { label: "Facebook", href: "https://facebook.com/share/1ZMNajb5NE" },
-  { label: "TikTok", href: "https://tiktok.com/@harav.roi.amgar" },
-  { label: "WhatsApp", href: "https://whatsapp.com/channel/0029Vb7F1opJP212dpclkU3d" },
+  { label: "▶️ YouTube", href: "https://www.youtube.com/channel/UCpep2f42VluYwMqZ4kXiQTA" },
+  { label: "📸 Instagram", href: "https://instagram.com/harav_roi_amgar" },
+  { label: "👍 Facebook", href: "https://facebook.com/share/1ZMNajb5NE" },
+  { label: "🎵 TikTok", href: "https://tiktok.com/@harav.roi.amgar" },
+  { label: "💬 WhatsApp", href: "https://whatsapp.com/channel/0029Vb7F1opJP212dpclkU3d" },
 ];
 
 const year = new Date().getFullYear();
