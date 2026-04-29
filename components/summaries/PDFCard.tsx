@@ -63,8 +63,8 @@ export default function PDFCard({ title, description, category, pdfUrl }: PDFCar
           download
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm text-white transition-opacity hover:opacity-90"
-          style={{ background: "var(--color-navy)" }}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-sm transition-opacity hover:opacity-90"
+          style={{ background: "var(--color-navy)", color: "#faf3e2" }}
         >
           <Download size={15} />
           הורדה
