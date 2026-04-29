@@ -43,7 +43,7 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
               </div>
             </div>
             <div style={{ position: "relative" }}>
-              <div style={{ position: "relative", aspectRatio: "4/5", borderRadius: "24px", overflow: "hidden", maxWidth: "420px", margin: "0 auto" }}>
+              <div className="hero-image-mobile" style={{ position: "relative", aspectRatio: "4/5", borderRadius: "24px", overflow: "hidden", maxWidth: "420px", margin: "0 auto" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imageUrl || "/rabbi.jpg"} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
               </div>
@@ -51,8 +51,12 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
           </div>
         </div>
         <style>{`
-          .hero-grid { display: flex; flex-direction: column-reverse; gap: 32px; }
-          @media (min-width: 768px) { .hero-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 80px; align-items: center; } }
+          .hero-grid { display: flex; flex-direction: column; gap: 24px; }
+          .hero-image-mobile { max-height: 280px; aspect-ratio: 4/3 !important; }
+          @media (min-width: 768px) {
+            .hero-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 80px; align-items: center; }
+            .hero-image-mobile { max-height: none; aspect-ratio: 4/5 !important; }
+          }
         `}</style>
       </section>
     );
@@ -163,6 +167,7 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
           {/* עמודה שמאלית (שנייה ב-RTL): פורטרט */}
           <div style={{ position: "relative" }}>
             <div
+              className="hero-image-mobile"
               style={{
                 position: "relative",
                 aspectRatio: "4/5",
@@ -224,9 +229,10 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
       <style>{`
         .hero-grid {
           display: flex;
-          flex-direction: column-reverse;
-          gap: 32px;
+          flex-direction: column;
+          gap: 24px;
         }
+        .hero-image-mobile { max-height: 280px; aspect-ratio: 4/3 !important; }
         @media (min-width: 768px) {
           .hero-grid {
             display: grid;
@@ -234,6 +240,7 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
             gap: 80px;
             align-items: center;
           }
+          .hero-image-mobile { max-height: none; aspect-ratio: 4/5 !important; }
         }
       `}</style>
     </section>
