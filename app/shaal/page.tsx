@@ -50,7 +50,7 @@ export default async function ShaalPage({
         style={{ background: "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)" }}
       >
         <div className="container">
-          <h1 className="text-3xl font-bold text-white mb-3">שאל את הרב</h1>
+          <h1 className="text-3xl font-bold mb-3" style={{ color: "var(--color-bg-paper)" }}>שאל את הרב</h1>
           <p className="text-white/80 text-lg max-w-lg mx-auto">
             שלח שאלה לרב רועי אמגר. שאלות נבחרות יפורסמו בארכיון לתועלת הציבור.
           </p>

@@ -117,8 +117,8 @@ export default async function CategoryPage({ params }: Props) {
         style={{ background: "linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)" }}
       >
         <div className="container text-center">
-          <h1 className="text-3xl font-bold text-white">{info.hebrewName}</h1>
-          <p className="text-white/80 mt-2">{info.desc}</p>
+          <h1 className="text-3xl font-bold" style={{ color: "var(--color-bg-paper)" }}>{info.hebrewName}</h1>
+          <p style={{ color: "rgba(250,243,226,0.8)" }} className="mt-2">{info.desc}</p>
         </div>
       </section>
 
