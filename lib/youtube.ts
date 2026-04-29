@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { decodeHTMLEntities } from "./decodeHtml";
+import { fetchRSSVideos, isLikelyShort } from "./youtube/rss";
 
 export interface YouTubeVideo {
   videoId: string;
@@ -10,6 +11,22 @@ export interface YouTubeVideo {
 }
 
 const CHANNEL_ID = "UCpep2f42VluYwMqZ4kXiQTA";
+
+// סטטוס סנכרון אחרון — נקרא ע"י endpoint health-check
+type SyncSource = "api" | "rss" | "none";
+type SyncStatus = {
+  lastSource: SyncSource;
+  lastSuccessAt: number; // epoch ms
+  lastErrorMessage: string | null;
+};
+const _syncStatus: SyncStatus = {
+  lastSource: "none",
+  lastSuccessAt: 0,
+  lastErrorMessage: null,
+};
+export function getYouTubeSyncStatus(): SyncStatus {
+  return { ..._syncStatus };
+}
 
 // זורק חריגה במקום להחזיר [] בכשל — Next.js לא מאחסן rejections ב-unstable_cache
 // כך אין יותר "הרעלת cache" של 24ש כשהמפתח/קוואטה זמנית נופלים.
@@ -62,24 +79,68 @@ async function _fetchYouTubeVideos(
   return items;
 }
 
-// cache ל-24 שעות — קריאה אחת ביום ל-YouTube API.
-// שם המפתח שונה ל-v2 כדי לבטל cache מורעל קיים.
+// cache ל-שעה — בכשלון API מנסים שוב כל שעה (לא 24)
+// כך כשהמפתח חוזר לעבוד, הסנכרון חוזר תוך שעה אוטומטית.
 const cachedFetchYouTubeVideos = unstable_cache(
   _fetchYouTubeVideos,
-  ["youtube-videos-v2"],
-  { revalidate: 86400 }
+  ["youtube-videos-v3"],
+  { revalidate: 3600 }
 );
 
+// RSS — חינמי, ללא מפתח, ללא quota. מתרענן כל שעה.
+const cachedFetchRSS = unstable_cache(
+  fetchRSSVideos,
+  ["youtube-rss-v1"],
+  { revalidate: 3600 }
+);
+
+/**
+ * שליפת סרטונים בשתי שכבות הגנה:
+ * 1. YouTube Data API (מחזיר 50, מסונן ב-duration). אם נכשל →
+ * 2. RSS feed (חינמי, 15 סרטונים אחרונים, ללא duration — סינון לפי כותרת).
+ *
+ * אם שתיהן נופלות → מערך ריק (האתר ימשיך לעבוד עם שאר התוכן).
+ * הסטטוס נשמר ב-_syncStatus וניתן לקריאה דרך /api/cron/youtube-health.
+ */
 export async function fetchYouTubeVideos(
   maxResults: number,
   videoDuration?: "short" | "medium" | "long"
 ): Promise<YouTubeVideo[]> {
+  // שכבה 1: API
   try {
-    return await cachedFetchYouTubeVideos(maxResults, videoDuration);
+    const items = await cachedFetchYouTubeVideos(maxResults, videoDuration);
+    _syncStatus.lastSource = "api";
+    _syncStatus.lastSuccessAt = Date.now();
+    _syncStatus.lastErrorMessage = null;
+    return items;
   } catch (e) {
-    console.error("[youtube] fetch failed:", (e as Error).message);
-    return [];
+    const msg = (e as Error).message;
+    _syncStatus.lastErrorMessage = msg;
+    console.error("[youtube] API failed, falling back to RSS:", msg);
   }
+
+  // שכבה 2: RSS (כשהשכבה הראשונה נכשלה)
+  try {
+    const rssItems = await cachedFetchRSS();
+    _syncStatus.lastSource = "rss";
+    _syncStatus.lastSuccessAt = Date.now();
+
+    // RSS לא מבחין ב-duration. אם המבקש ביקש "short" — נחזיר רק חשודים כשורטס לפי כותרת.
+    // אחרת — נחזיר את כל מה שיש (עד maxResults).
+    let filtered = rssItems;
+    if (videoDuration === "short") {
+      filtered = rssItems.filter(isLikelyShort);
+    } else if (videoDuration === "long" || videoDuration === "medium") {
+      filtered = rssItems.filter((v) => !isLikelyShort(v));
+    }
+    return filtered.slice(0, maxResults);
+  } catch (e) {
+    const msg = (e as Error).message;
+    _syncStatus.lastErrorMessage = `API+RSS both failed: ${msg}`;
+    console.error("[youtube] RSS fallback ALSO failed:", msg);
+  }
+
+  return [];
 }
 
 /**
