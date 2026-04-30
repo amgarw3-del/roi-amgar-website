@@ -72,7 +72,7 @@ export default async function Icon() {
         </div>
         <div style={{ width: '300px', height: '2px', background: '#b87333', display: 'flex' }} />
         <div style={{ color: '#c8a96e', fontSize: 26, fontStyle: 'italic', display: 'flex' }}>
-          דומילו מירועיש
+          דומילו םירועיש
         </div>
       </div>
     ),

@@ -71,7 +71,7 @@ export default async function AppleIcon() {
         </div>
         <div style={{ width: '106px', height: '1px', background: '#b87333', display: 'flex' }} />
         <div style={{ color: '#c8a96e', fontSize: 9, fontStyle: 'italic', display: 'flex' }}>
-          דומילו מירועיש
+          דומילו םירועיש
         </div>
       </div>
     ),
