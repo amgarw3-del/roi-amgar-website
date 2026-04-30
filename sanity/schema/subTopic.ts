@@ -27,6 +27,14 @@ export const subTopicSchema = defineType({
       },
     }),
     defineField({ name: "order", title: "סדר", type: "number" }),
+    defineField({
+      name: "aliases",
+      title: "שמות חלופיים / מילות חיפוש",
+      type: "array",
+      of: [{ type: "string" }],
+      description:
+        "שמות נוספים בהם המשתמשים עשויים לחפש את הנושא — דוגמא לראש השנה: 'יום הדין', 'תשרי', 'ר״ה'. עוזר לבוט החיפוש למצוא את התוכן.",
+    }),
   ],
   preview: {
     select: { title: "hebrewName", subtitle: "group" },

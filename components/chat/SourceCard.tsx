@@ -8,6 +8,17 @@ const TYPE_ACCENT: Record<string, string> = {
   qna: "rgba(46, 125, 90, 0.85)",
   youtube: "rgba(220, 50, 50, 0.85)",       // YouTube red
   youtubeShort: "rgba(220, 50, 50, 0.85)",
+  lecture: "rgba(120, 50, 160, 0.85)",
+  pdfSummary: "rgba(40, 100, 140, 0.85)",
+  service: "var(--color-ochre)",
+};
+
+// CTA copy + URL pattern for the 4 virtual service docs surfaced by the bot.
+const SERVICE_CTA: Record<string, { emoji: string; label: string }> = {
+  "/hupot":     { emoji: "💍", label: "לתיאום עריכת חופה" },
+  "/lectures":  { emoji: "🎤", label: "להזמנת הרצאה" },
+  "/shaal":     { emoji: "✉️", label: "שאל שאלה לרב" },
+  "/sikkumim":  { emoji: "📥", label: "להורדת הסיכומים" },
 };
 
 function YouTubeIcon() {
@@ -25,6 +36,56 @@ function YouTubeIcon() {
 export default function SourceCard({ source }: { source: ChatSource }) {
   const accent = TYPE_ACCENT[source.type] ?? "var(--color-muted)";
   const isYoutube = source.type === "youtube" || source.type === "youtubeShort";
+  const isService = source.type === "service";
+
+  // Render a prominent CTA card for virtual service docs (hupot/lectures/shaal/sikkumim).
+  if (isService) {
+    const cta = SERVICE_CTA[source.url] ?? { emoji: "→", label: "עבור לדף" };
+    return (
+      <Link
+        href={source.url}
+        className="block rounded-xl p-4 transition-all group"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(168, 106, 44, 0.12) 0%, rgba(168, 106, 44, 0.05) 100%)",
+          border: "2px solid var(--color-ochre)",
+          boxShadow: "0 2px 8px rgba(168, 106, 44, 0.15)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 8px 22px rgba(168, 106, 44, 0.28)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 2px 8px rgba(168, 106, 44, 0.15)";
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <span
+            className="shrink-0 text-2xl"
+            aria-hidden
+            style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.1))" }}
+          >
+            {cta.emoji}
+          </span>
+          <div className="flex-1 min-w-0">
+            <div
+              className="text-sm font-bold mb-0.5"
+              style={{ color: "var(--color-navy)" }}
+            >
+              {source.title}
+            </div>
+            <div
+              className="text-xs font-semibold"
+              style={{ color: "var(--color-ochre-dark, #8a5520)" }}
+            >
+              {cta.label} ←
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }
 
   const content = (
     <div className="flex items-start gap-2.5">

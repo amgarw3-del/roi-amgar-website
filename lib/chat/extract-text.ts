@@ -25,6 +25,7 @@ interface SubTopicRef {
   hebrewName?: string;
   slug?: { current?: string };
   group?: string; // moed | parasha | fast | national
+  aliases?: string[];
 }
 
 export interface IndexableDoc {
@@ -42,6 +43,7 @@ export interface IndexableDoc {
   category?: CategoryRef | null;
   extraCategories?: CategoryRef[];
   subTopics?: SubTopicRef[];
+  searchKeywords?: string[];
   // type-specific
   summary?: string;
   transcript?: string;
@@ -50,6 +52,8 @@ export interface IndexableDoc {
   body?: PortableTextBlock[];
   answer?: string;
   description?: string;
+  questionType?: string;
+  answerType?: string;
 }
 
 export interface ExtractedDoc {
@@ -63,6 +67,8 @@ export interface ExtractedDoc {
   topics: string[];
   publishedAt?: string;
   text: string;
+  /** Q&A flag: true if questionType==="practical-ruling" or answerType==="practical". */
+  isHalachicRuling?: boolean;
 }
 
 function getSlug(doc: IndexableDoc): string {
@@ -109,6 +115,18 @@ function topicLabels(doc: IndexableDoc): string[] {
     if (!st?.hebrewName) continue;
     const prefix = PARASHA_GROUP_LABEL[st.group ?? ""] ?? "";
     out.push(prefix ? `${prefix} ${st.hebrewName}` : st.hebrewName);
+    // Add aliases of the subTopic — fueling synonym/keyword matching by Gemini
+    if (Array.isArray(st.aliases)) {
+      for (const alias of st.aliases) {
+        if (typeof alias === "string" && alias.trim()) out.push(alias.trim());
+      }
+    }
+  }
+  // Add document-level searchKeywords (manually curated synonyms / abbreviations)
+  if (Array.isArray(doc.searchKeywords)) {
+    for (const kw of doc.searchKeywords) {
+      if (typeof kw === "string" && kw.trim()) out.push(kw.trim());
+    }
   }
   return Array.from(new Set(out));
 }
@@ -172,6 +190,10 @@ export function extract(doc: IndexableDoc): ExtractedDoc | null {
 
   if (text.length < 30) return null;
 
+  const isHalachicRuling =
+    type === "qna" &&
+    (doc.questionType === "practical-ruling" || doc.answerType === "practical");
+
   return {
     docId: doc._id,
     type,
@@ -182,5 +204,6 @@ export function extract(doc: IndexableDoc): ExtractedDoc | null {
     topics,
     publishedAt: doc.publishedAt,
     text,
+    isHalachicRuling,
   };
 }

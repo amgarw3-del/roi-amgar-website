@@ -37,6 +37,14 @@ export const blogPostSchema = defineType({
       of: [{ type: "block" }],
     }),
     defineField({
+      name: "searchKeywords",
+      title: "מילות חיפוש לבוט",
+      type: "array",
+      of: [{ type: "string" }],
+      description:
+        "מילים נוספות לזיהוי הפוסט על ידי בוט החיפוש — מילים נרדפות, ראשי תיבות.",
+    }),
+    defineField({
       name: "source",
       title: "מקור",
       type: "string",

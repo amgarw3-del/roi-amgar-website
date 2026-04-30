@@ -49,6 +49,14 @@ export const divarToraSchema = defineType({
       description: "מועד / פרשה / צום / אירוע לאומי — אפשר לבחור כמה",
     }),
     defineField({
+      name: "searchKeywords",
+      title: "מילות חיפוש לבוט",
+      type: "array",
+      of: [{ type: "string" }],
+      description:
+        "מילים נוספות שיעזרו לבוט החיפוש למצוא את הדבר תורה — שמות חלופיים, ראשי תיבות, מילים נרדפות. דוגמא: ['שמיטה', 'שמיטת קרקעות', 'שביעית']",
+    }),
+    defineField({
       name: "sourceType",
       title: "מקור",
       type: "string",

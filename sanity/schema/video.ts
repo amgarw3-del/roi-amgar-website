@@ -47,6 +47,14 @@ export const videoSchema = defineType({
     }),
     defineField({ name: "transcript", title: "תמלול", type: "text" }),
     defineField({
+      name: "searchKeywords",
+      title: "מילות חיפוש לבוט",
+      type: "array",
+      of: [{ type: "string" }],
+      description:
+        "מילים נוספות לזיהוי השיעור על ידי בוט החיפוש — מילים נרדפות, ראשי תיבות.",
+    }),
+    defineField({
       name: "transcriptStatus",
       title: "סטטוס תמלול",
       type: "string",

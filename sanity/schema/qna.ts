@@ -45,6 +45,14 @@ export const qnaSchema = defineType({
       type: "reference",
       to: [{ type: "category" }],
     }),
+    defineField({
+      name: "searchKeywords",
+      title: "מילות חיפוש לבוט",
+      type: "array",
+      of: [{ type: "string" }],
+      description:
+        "מילים שיעזרו לבוט למצוא את התשובה גם אם השואל ניסח אחרת. דוגמא: ['ספירת העומר', 'תספורת', 'גילוח']",
+    }),
     defineField({ name: "hebrewDate", title: "תאריך עברי", type: "string" }),
     defineField({ name: "publishedAt", title: "תאריך פרסום", type: "datetime" }),
     defineField({

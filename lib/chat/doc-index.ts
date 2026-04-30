@@ -24,6 +24,8 @@ export interface IndexedDoc {
   publishedAt?: string;
   /** Compact preview — first 600 chars of the body. */
   preview: string;
+  /** Q&A practical-ruling indicator — surfaced in index block as [הלכה למעשה ✓]. */
+  isHalachicRuling?: boolean;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -35,7 +37,70 @@ const TYPE_LABELS: Record<string, string> = {
   pdfSummary: "סיכום למבחן רבנות",
   youtube: "שיעור ב-YouTube",
   youtubeShort: "שורט",
+  service: "שירות",
 };
+
+// Virtual "service" docs — site sections that aren't a Sanity content type but should
+// be surfacable as sources with prominent CTAs (chof/lectures/shaal/sikkumim).
+const VIRTUAL_DOCS: IndexedDoc[] = [
+  {
+    docId: "virtual:hupot",
+    type: "service",
+    typeLabel: "שירות — עריכת חופות",
+    title: "עריכת חופות וקידושין",
+    slug: "service-hupot",
+    url: "/hupot",
+    topics: [
+      "חופה","חופות","קידושין","נישואין","חתונה","חתן","כלה","שבע ברכות",
+      "כתובה","טבעת","ארוסין","מסדר קידושין","עריכת חופה","wedding"
+    ],
+    preview:
+      "הרב רועי אמגר עורך חופות וקידושין — ייעוץ אישי לחתן ולכלה, ליווי לפני החתונה, ועריכת הטקס בנשמה ובחום. כולל המלצות מזוגות שערכו אצלו את החופה.",
+  },
+  {
+    docId: "virtual:lectures-booking",
+    type: "service",
+    typeLabel: "שירות — הזמנת הרצאה",
+    title: "הזמנת הרצאה לאירוע / קהילה / בית כנסת",
+    slug: "service-lectures",
+    url: "/lectures",
+    topics: [
+      "הרצאה","הרצאות","הזמנת הרצאה","בית כנסת","קהילה","אירוע","שבת חתן",
+      "ברית","יום הולדת","בר מצווה","בת מצווה","יום עיון","ערב עיון",
+      "lecture","speaker"
+    ],
+    preview:
+      "להזמנת הרצאה של הרב רועי אמגר לכל אירוע — שבת חתן, בר/בת מצווה, ברית, ימי עיון בקהילה, ערבי לימוד.",
+  },
+  {
+    docId: "virtual:shaal",
+    type: "service",
+    typeLabel: "שירות — שאל את הרב",
+    title: "שאל את הרב — שאלה הלכתית מעשית",
+    slug: "service-shaal",
+    url: "/shaal",
+    topics: [
+      "שאלה הלכתית","הלכה למעשה","שאלה אישית","התייעצות","ייעוץ הלכתי",
+      "WhatsApp","וואטסאפ","שו״ת","שאלה לרב","פסק הלכה"
+    ],
+    preview:
+      "טופס לשאלות הלכתיות מעשיות — כולל מספר WhatsApp לשליחה ישירה לרב לקבלת מענה אישי.",
+  },
+  {
+    docId: "virtual:sikkumim",
+    type: "service",
+    typeLabel: "שירות — סיכומי רבנות",
+    title: "סיכומי רבנות להורדה (PDF)",
+    slug: "service-sikkumim",
+    url: "/sikkumim",
+    topics: [
+      "סיכומים","סיכומי הלכה","הלכות שבת","כשרות","נידה","אבלות","יורה דעה",
+      "מבחן רבנות","למידה","PDF","הורדה"
+    ],
+    preview:
+      "סיכומים מלאים בפורמט PDF להורדה — שבת, כשרות, נידה, אבלות, יורה דעה. חינם לציבור הלומדים.",
+  },
+];
 
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -51,9 +116,11 @@ const SANITY_QUERY = `*[_type in ["video","divarTora","blogPost","qna","lecture"
   _id, _type, title, question, slug, status, hidden, isPublic, publishedAt,
   summary, transcript, teaser, content, body, answer,
   published, description,
+  questionType, answerType,
+  searchKeywords,
   category->{hebrewName, slug},
   extraCategories[]->{hebrewName, slug},
-  subTopics[]->{hebrewName, slug, group}
+  subTopics[]->{hebrewName, slug, group, aliases}
 }`;
 
 function fromExtracted(extracted: ExtractedDoc): IndexedDoc {
@@ -68,6 +135,7 @@ function fromExtracted(extracted: ExtractedDoc): IndexedDoc {
     topics: extracted.topics,
     publishedAt: extracted.publishedAt,
     preview: extracted.text.slice(0, 600),
+    isHalachicRuling: extracted.isHalachicRuling,
   };
 }
 
@@ -130,7 +198,8 @@ async function fetchAll(): Promise<IndexedDoc[]> {
 
   const all = [...sanity, ...filteredYoutube];
   all.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
-  return all;
+  // Virtual service docs are always available regardless of Sanity/YouTube state.
+  return [...VIRTUAL_DOCS, ...all];
 }
 
 export async function getDocIndex(): Promise<IndexedDoc[]> {
@@ -151,16 +220,17 @@ export function invalidateDocIndex(): void {
   cache = null;
 }
 
-/** Build the compact textual block fed to the LLM. ~150-220 chars per doc. */
+/** Build the compact textual block fed to the LLM. ~150-280 chars per doc. */
 export function buildIndexBlock(docs: IndexedDoc[]): string {
   return docs
     .map((d) => {
       const meta: string[] = [d.typeLabel];
+      if (d.isHalachicRuling) meta.push("[הלכה למעשה ✓]");
       if (d.category) meta.push(`קטגוריה: ${d.category}`);
       if (d.topics.length) meta.push(`נושאים: ${d.topics.join(", ")}`);
       const head = `[slug:${d.slug}] (${meta.join(" | ")}) ${d.title}`;
       if (d.preview && d.preview !== d.title) {
-        return `${head}\n  ${d.preview.slice(0, 220)}`;
+        return `${head}\n  ${d.preview.slice(0, 240)}`;
       }
       return head;
     })

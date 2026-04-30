@@ -11,6 +11,13 @@ const SUGGESTIONS = [
   "סיכומי הלכה להורדה",
 ];
 
+const QUICK_ACTIONS = [
+  { emoji: "💍", label: "חופה",   url: "/hupot" },
+  { emoji: "🎤", label: "הרצאה",  url: "/lectures" },
+  { emoji: "✉️", label: "שאלה",   url: "/shaal" },
+  { emoji: "📥", label: "סיכומים", url: "/sikkumim" },
+];
+
 interface Props {
   onClose: () => void;
 }
@@ -174,6 +181,39 @@ export default function ChatPanel({ onClose }: Props) {
                   {q}
                 </button>
               ))}
+            </div>
+            <div className="space-y-2 pt-2">
+              <div
+                className="text-[11px] font-semibold px-1 tracking-wide"
+                style={{ color: "var(--color-muted)" }}
+              >
+                ניווט מהיר:
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {QUICK_ACTIONS.map((a) => (
+                  <a
+                    key={a.url}
+                    href={a.url}
+                    className="flex flex-col items-center justify-center gap-1 px-2 py-3 rounded-xl transition-all text-center"
+                    style={{
+                      background: "var(--color-bg-card)",
+                      border: "1px solid var(--color-line-light)",
+                      color: "var(--color-ink-body)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--color-ochre)";
+                      e.currentTarget.style.background = "rgba(168, 106, 44, 0.08)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "var(--color-line-light)";
+                      e.currentTarget.style.background = "var(--color-bg-card)";
+                    }}
+                  >
+                    <span className="text-xl" aria-hidden>{a.emoji}</span>
+                    <span className="text-[11px] font-semibold">{a.label}</span>
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
