@@ -97,24 +97,25 @@ export default function PWAInstallButton() {
   }
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
+    <div style={{ position: "relative", display: "block", width: "100%" }}>
       <button
         onClick={handleInstall}
         style={{
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: "8px",
-          fontSize: "16px",
+          gap: "6px",
+          fontSize: "15px",
           fontWeight: 600,
           color: "#fff",
-          padding: "16px 20px",
+          padding: "16px 16px",
           background: "var(--color-ochre)",
           border: "none",
           borderRadius: "10px",
           cursor: "pointer",
           fontFamily: "inherit",
           width: "100%",
+          whiteSpace: "nowrap",
         }}
       >
         ⬇ הורד אפליקציה
