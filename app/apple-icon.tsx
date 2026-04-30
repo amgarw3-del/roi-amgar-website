@@ -54,7 +54,7 @@ export default async function AppleIcon() {
         }}
       >
         <div style={{ color: '#f5c96e', fontSize: 10, fontWeight: 700, letterSpacing: '1px', display: 'flex' }}>
-          ◆ מייחל הרות ◆
+          ◆ םייחל הרות ◆
         </div>
         <div style={{ width: '106px', height: '1px', background: '#b87333', display: 'flex' }} />
         <div
