@@ -49,6 +49,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Allow Service Worker to control the entire origin
+        source: "/sw.js",
+        headers: [
+          { key: "Service-Worker-Allowed", value: "/" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+        ],
+      },
+      {
         // Skip strict CSP for Sanity Studio (it needs blob: and unsafe-eval)
         source: "/studio/(.*)",
         headers: [

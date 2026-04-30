@@ -27,6 +27,12 @@ export const metadata: Metadata = {
     "שיעורי תורה, הלכה, אמונה וזוגיות — הרב רועי אמגר. שאלות ותשובות, פרשת שבוע ועוד.",
   keywords: ["הרב רועי אמגר", "שיעורי תורה", "הלכה", "פרשת שבוע", "זוגיות"],
   authors: [{ name: "הרב רועי אמגר" }],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "הרב אמגר",
+  },
   openGraph: {
     type: "website",
     locale: "he_IL",
@@ -54,6 +60,20 @@ export default function RootLayout({
       <body className="font-heebo min-h-full flex flex-col">
         <SiteShell>{children}</SiteShell>
         <Analytics />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js');
+                });
+              }
+              if (window.matchMedia('(display-mode: standalone)').matches) {
+                document.cookie = 'pwa=1; path=/; max-age=31536000';
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

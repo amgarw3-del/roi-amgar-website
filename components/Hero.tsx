@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PWAInstallButton from "@/components/PWAInstallButton";
 
 interface HeroProps {
   title?: string;
@@ -37,7 +38,15 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
                 <Link href={ctaHref || "/videos"} className="btn-primary">
                   {ctaLabel || "צפו בשיעורים ←"}
                 </Link>
-                <Link href="/shaal" style={{ display: "inline-flex", alignItems: "center", fontSize: "16px", fontWeight: 600, color: "var(--color-ink)", padding: "16px 4px", borderBottom: "1.5px solid var(--color-ink)" }}>
+                {/* מובייל: כפתור התקנת PWA | דסקטופ: שאל את הרב */}
+                <span className="md:hidden">
+                  <PWAInstallButton />
+                </span>
+                <Link
+                  href="/shaal"
+                  className="hidden md:inline-flex"
+                  style={{ alignItems: "center", fontSize: "16px", fontWeight: 600, color: "var(--color-ink)", padding: "16px 4px", borderBottom: "1.5px solid var(--color-ink)" }}
+                >
                   שאל את הרב →
                 </Link>
               </div>
@@ -147,10 +156,14 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
               <Link href="/videos" className="btn-primary">
                 צפו בשיעורים ←
               </Link>
+              {/* מובייל: כפתור התקנת PWA | דסקטופ: שאל את הרב */}
+              <span className="md:hidden">
+                <PWAInstallButton />
+              </span>
               <Link
                 href="/shaal"
+                className="hidden md:inline-flex"
                 style={{
-                  display: "inline-flex",
                   alignItems: "center",
                   fontSize: "16px",
                   fontWeight: 600,
