@@ -34,12 +34,12 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
                   {subtitle}
                 </p>
               )}
-              <div className="flex flex-wrap gap-4">
-                <Link href={ctaHref || "/videos"} className="btn-primary">
+              <div className="flex gap-3 items-center">
+                <Link href={ctaHref || "/videos"} className="btn-primary flex-1 md:flex-none justify-center">
                   {ctaLabel || "צפו בשיעורים ←"}
                 </Link>
                 {/* מובייל: כפתור התקנת PWA | דסקטופ: שאל את הרב */}
-                <span className="md:hidden">
+                <span className="md:hidden flex-1">
                   <PWAInstallButton />
                 </span>
                 <Link
@@ -152,12 +152,12 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-wrap gap-4">
-              <Link href="/videos" className="btn-primary">
+            <div className="flex gap-3 items-center">
+              <Link href="/videos" className="btn-primary flex-1 md:flex-none justify-center">
                 צפו בשיעורים ←
               </Link>
               {/* מובייל: כפתור התקנת PWA | דסקטופ: שאל את הרב */}
-              <span className="md:hidden">
+              <span className="md:hidden flex-1">
                 <PWAInstallButton />
               </span>
               <Link

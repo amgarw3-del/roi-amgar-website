@@ -103,17 +103,18 @@ export default function PWAInstallButton() {
         style={{
           display: "inline-flex",
           alignItems: "center",
+          justifyContent: "center",
           gap: "8px",
           fontSize: "16px",
           fontWeight: 600,
           color: "#fff",
-          padding: "16px 32px",
+          padding: "16px 20px",
           background: "var(--color-ochre)",
           border: "none",
           borderRadius: "10px",
           cursor: "pointer",
           fontFamily: "inherit",
-          whiteSpace: "nowrap",
+          width: "100%",
         }}
       >
         ⬇ הורד אפליקציה
