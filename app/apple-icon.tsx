@@ -51,9 +51,10 @@ export default async function AppleIcon() {
           background: 'linear-gradient(145deg, #1a2744 0%, #2e3f6e 100%)',
           gap: '4px',
           fontFamily,
+          direction: 'rtl',
         }}
       >
-        <div style={{ color: '#f5c96e', fontSize: 10, fontWeight: 700, letterSpacing: '1px', display: 'flex' }}>
+        <div style={{ color: '#f5c96e', fontSize: 10, fontWeight: 700, letterSpacing: '1px', display: 'flex', direction: 'rtl' }}>
           ◆ תורה לחיים ◆
         </div>
         <div style={{ width: '106px', height: '1px', background: '#b87333', display: 'flex' }} />
@@ -65,12 +66,13 @@ export default async function AppleIcon() {
             textAlign: 'center',
             lineHeight: 1.15,
             display: 'flex',
+            direction: 'rtl',
           }}
         >
           הרב רועי אמגר
         </div>
         <div style={{ width: '106px', height: '1px', background: '#b87333', display: 'flex' }} />
-        <div style={{ color: '#c8a96e', fontSize: 9, fontStyle: 'italic', display: 'flex' }}>
+        <div style={{ color: '#c8a96e', fontSize: 9, fontStyle: 'italic', display: 'flex', direction: 'rtl' }}>
           שיעורים ולימוד
         </div>
       </div>

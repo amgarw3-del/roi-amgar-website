@@ -52,9 +52,10 @@ export default async function Icon() {
           background: 'linear-gradient(145deg, #1a2744 0%, #2e3f6e 100%)',
           gap: '10px',
           fontFamily,
+          direction: 'rtl',
         }}
       >
-        <div style={{ color: '#f5c96e', fontSize: 28, fontWeight: 700, letterSpacing: '3px', display: 'flex' }}>
+        <div style={{ color: '#f5c96e', fontSize: 28, fontWeight: 700, letterSpacing: '3px', display: 'flex', direction: 'rtl' }}>
           ◆ תורה לחיים ◆
         </div>
         <div style={{ width: '300px', height: '2px', background: '#b87333', display: 'flex' }} />
@@ -66,12 +67,13 @@ export default async function Icon() {
             textAlign: 'center',
             lineHeight: 1.15,
             display: 'flex',
+            direction: 'rtl',
           }}
         >
           הרב רועי אמגר
         </div>
         <div style={{ width: '300px', height: '2px', background: '#b87333', display: 'flex' }} />
-        <div style={{ color: '#c8a96e', fontSize: 26, fontStyle: 'italic', display: 'flex' }}>
+        <div style={{ color: '#c8a96e', fontSize: 26, fontStyle: 'italic', display: 'flex', direction: 'rtl' }}>
           שיעורים ולימוד
         </div>
       </div>
