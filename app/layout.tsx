@@ -18,7 +18,7 @@ const frankRuhl = Frank_Ruhl_Libre({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://roiamgar.co.il"),
+  metadataBase: new URL("https://haravroiamgar.com"),
   title: {
     default: "הרב רועי אמגר | תורה לחיים",
     template: "%s | הרב רועי אמגר",
