@@ -22,6 +22,7 @@ export async function proxy(req: NextRequest) {
       "/api/admin/auth",
       "/api/admin/google-auth",
       "/api/admin/google-callback",
+      "/api/admin/finish-login",
     ];
     if (publicAdminPaths.some((p) => pathname.startsWith(p))) {
       return NextResponse.next();
