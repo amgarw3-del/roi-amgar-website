@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Download } from "lucide-react";
 import DivarToraContent from "@/components/DivarToraContent";
+import DvarTracker from "@/components/DvarTracker";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -41,6 +42,7 @@ export default async function DivarToraSlugPage({ params }: Props) {
 
   return (
     <div className="container py-10 max-w-2xl">
+      <DvarTracker _id={item._id} />
       {/* חזרה */}
       <Link
         href="/dvar-tora"

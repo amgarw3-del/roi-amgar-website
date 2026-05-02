@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Trash2, CheckCircle, Sparkles, ChevronDown, ChevronUp,
@@ -42,6 +42,14 @@ function CopyButton({ text }: { text: string }) {
 }
 
 // ─── גריד בחירת קטגוריות + תתי-קטגוריות ───────────────────────────────────
+const SUBTOPIC_GROUPS = [
+  { value: "moed", title: "מועדים" },
+  { value: "parasha", title: "פרשיות" },
+  { value: "fast", title: "צומות" },
+  { value: "national", title: "מועדים לאומיים" },
+  { value: "general", title: "כללי" },
+] as const;
+
 function CategoryGrid({
   categories,
   subTopics,
@@ -49,6 +57,7 @@ function CategoryGrid({
   selectedSubIds,
   onChangeCats,
   onChangeSubs,
+  onSubTopicAdded,
 }: {
   categories: CategoryItem[];
   subTopics: SubTopicItem[];
@@ -56,8 +65,44 @@ function CategoryGrid({
   selectedSubIds: string[];
   onChangeCats: (ids: string[]) => void;
   onChangeSubs: (ids: string[]) => void;
+  onSubTopicAdded?: (sub: SubTopicItem) => void;
 }) {
   const [showSubs, setShowSubs] = useState(false);
+  const [showAddSub, setShowAddSub] = useState(false);
+  const [newSubName, setNewSubName] = useState("");
+  const [newSubGroup, setNewSubGroup] = useState<string>("general");
+  const [savingSub, setSavingSub] = useState(false);
+
+  async function handleAddSub() {
+    if (!newSubName.trim()) return;
+    setSavingSub(true);
+    try {
+      const res = await fetch("/api/admin/save-subtopic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hebrewName: newSubName.trim(), group: newSubGroup }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`שגיאה: ${data.error ?? res.status}`);
+        return;
+      }
+      const newSub: SubTopicItem = {
+        _id: data._id,
+        hebrewName: data.hebrewName ?? newSubName.trim(),
+        slug: { current: data.slug?.current ?? "" },
+        group: data.group ?? newSubGroup,
+      };
+      onSubTopicAdded?.(newSub);
+      onChangeSubs([...selectedSubIds, newSub._id]);
+      setNewSubName("");
+      setShowAddSub(false);
+    } catch (err) {
+      alert(`שגיאת רשת: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setSavingSub(false);
+    }
+  }
 
   function toggleCat(id: string) {
     if (selectedCatIds.includes(id)) {
@@ -135,58 +180,114 @@ function CategoryGrid({
       </div>
 
       {/* תתי-נושאים */}
-      {subTopics.length > 0 && (
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowSubs((s) => !s)}
-            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 w-full mb-2"
-          >
-            <Tag size={14} style={{ color: "var(--color-accent)" }} />
-            תתי-נושאים
-            {selectedSubIds.length > 0 && (
-              <span
-                className="text-xs px-1.5 py-0.5 rounded-full text-white font-bold"
-                style={{ background: "var(--color-accent)" }}
-              >
-                {selectedSubIds.length}
-              </span>
-            )}
-            <span className="mr-auto text-gray-400">{showSubs ? "▲" : "▼"}</span>
-          </button>
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowSubs((s) => !s)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 w-full mb-2"
+        >
+          <Tag size={14} style={{ color: "var(--color-accent)" }} />
+          תתי-נושאים
+          {selectedSubIds.length > 0 && (
+            <span
+              className="text-xs px-1.5 py-0.5 rounded-full text-white font-bold"
+              style={{ background: "var(--color-accent)" }}
+            >
+              {selectedSubIds.length}
+            </span>
+          )}
+          <span className="mr-auto text-gray-400">{showSubs ? "▲" : "▼"}</span>
+        </button>
 
-          {showSubs && (
-            <div className="flex flex-col gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50">
-              {Object.entries(groups).map(([groupName, items]) => (
-                <div key={groupName}>
-                  {Object.keys(groups).length > 1 && (
-                    <p className="text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">{groupName}</p>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    {items.map((st) => {
-                      const isSelected = selectedSubIds.includes(st._id);
-                      return (
-                        <button
-                          key={st._id}
-                          type="button"
-                          onClick={() => toggleSub(st._id)}
-                          className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium ${
-                            isSelected ? "text-white border-transparent" : "border-gray-300 text-gray-600 hover:border-gray-400"
-                          }`}
-                          style={isSelected ? { background: "var(--color-accent)", borderColor: "var(--color-accent)" } : {}}
-                        >
-                          {st.hebrewName}
-                          {isSelected && " ✓"}
-                        </button>
-                      );
-                    })}
+        {showSubs && (
+          <div className="flex flex-col gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50">
+            {Object.entries(groups).map(([groupName, items]) => (
+              <div key={groupName}>
+                {Object.keys(groups).length > 1 && (
+                  <p className="text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+                    {SUBTOPIC_GROUPS.find((g) => g.value === groupName)?.title ?? groupName}
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {items.map((st) => {
+                    const isSelected = selectedSubIds.includes(st._id);
+                    return (
+                      <button
+                        key={st._id}
+                        type="button"
+                        onClick={() => toggleSub(st._id)}
+                        className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium ${
+                          isSelected ? "text-white border-transparent" : "border-gray-300 text-gray-600 hover:border-gray-400"
+                        }`}
+                        style={isSelected ? { background: "var(--color-accent)", borderColor: "var(--color-accent)" } : {}}
+                      >
+                        {st.hebrewName}
+                        {isSelected && " ✓"}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* טופס הוספת תת-נושא inline */}
+            <div className="border-t border-gray-200 pt-3 mt-1">
+              {!showAddSub ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAddSub(true)}
+                  className="text-xs px-3 py-1.5 rounded-full border-2 border-dashed border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-700 font-medium flex items-center gap-1"
+                >
+                  <Plus size={12} />
+                  הוסף תת-נושא חדש
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2 p-3 rounded-lg bg-white border border-gray-200">
+                  <p className="text-xs font-semibold text-gray-600">תת-נושא חדש</p>
+                  <input
+                    autoFocus
+                    value={newSubName}
+                    onChange={(e) => setNewSubName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); handleAddSub(); }
+                      if (e.key === "Escape") setShowAddSub(false);
+                    }}
+                    placeholder="שם תת-נושא (לדוגמה: ל״ג בעומר)"
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  />
+                  <select
+                    value={newSubGroup}
+                    onChange={(e) => setNewSubGroup(e.target.value)}
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none"
+                  >
+                    {SUBTOPIC_GROUPS.map((g) => (
+                      <option key={g.value} value={g.value}>{g.title}</option>
+                    ))}
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddSub}
+                      disabled={savingSub || !newSubName.trim()}
+                      className="text-xs px-3 py-1.5 rounded-lg font-bold text-white disabled:opacity-50"
+                      style={{ background: "var(--color-primary)" }}
+                    >
+                      {savingSub ? "שומר..." : "✓ הוסף"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowAddSub(false); setNewSubName(""); }}
+                      className="text-xs px-3 py-1.5 rounded-lg font-medium text-gray-500 hover:bg-gray-100"
+                    >
+                      בטל
+                    </button>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -255,12 +356,13 @@ function ShareModal({ item, onClose }: { item: DivarToraItem; onClose: () => voi
 }
 
 // ─── מודל עריכת דבר תורה קיים ────────────────────────────────────────────────
-function EditModal({ item, categories, subTopics, onClose, onSaved }: {
+function EditModal({ item, categories, subTopics, onClose, onSaved, onSubTopicAdded }: {
   item: DivarToraItem;
   categories: CategoryItem[];
   subTopics: SubTopicItem[];
   onClose: () => void;
   onSaved: () => void;
+  onSubTopicAdded?: (sub: SubTopicItem) => void;
 }) {
   const [title, setTitle] = useState(item.title);
   const [teaser, setTeaser] = useState(item.teaser ?? "");
@@ -396,6 +498,7 @@ function EditModal({ item, categories, subTopics, onClose, onSaved }: {
           selectedSubIds={selectedSubs}
           onChangeCats={setSelectedCats}
           onChangeSubs={setSelectedSubs}
+          onSubTopicAdded={onSubTopicAdded}
         />
 
         {/* סטאטוס */}
@@ -465,7 +568,18 @@ function DivarRow({ item, canPublish, onPublish, onDelete, onEdit }: {
             </button>
           )}
           {item.status === "published" && item.content && (
-            <button onClick={() => setShowShare(true)} className="p-2 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-500" title="שתף ברשתות">
+            <button
+              onClick={() => {
+                setShowShare(true);
+                fetch("/api/track-share", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ _id: item._id }),
+                }).catch(() => {});
+              }}
+              className="p-2 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-500"
+              title="שתף ברשתות"
+            >
               <Share2 size={15} />
             </button>
           )}
@@ -507,7 +621,7 @@ function DivarRow({ item, canPublish, onPublish, onDelete, onEdit }: {
 
 // ─── כרטיסיית AI: עריכה + שמירה עם בחירת קטגוריות ───────────────────────
 function AiPreviewCard({
-  result, index, categories, subTopics, onSave, onDiscard,
+  result, index, categories, subTopics, onSave, onDiscard, onSubTopicAdded,
 }: {
   result: AiResult;
   index: number;
@@ -515,6 +629,7 @@ function AiPreviewCard({
   subTopics: SubTopicItem[];
   onSave: (data: { title: string; teaser: string; content: string; categoryIds: string[]; subTopicIds: string[]; status: "draft" | "published" }) => Promise<void>;
   onDiscard: () => void;
+  onSubTopicAdded?: (sub: SubTopicItem) => void;
 }) {
   const [title, setTitle] = useState(result.title);
   const [teaser, setTeaser] = useState(result.teaser);
@@ -566,6 +681,7 @@ function AiPreviewCard({
           selectedSubIds={selectedSubs}
           onChangeCats={setSelectedCats}
           onChangeSubs={setSelectedSubs}
+          onSubTopicAdded={onSubTopicAdded}
         />
         <div>
           <label className="text-xs font-medium text-gray-500 block mb-1">פרסום</label>
@@ -591,11 +707,12 @@ function AiPreviewCard({
 }
 
 // ─── טופס AI (Gemini/Anthropic) ────────────────────────────────────────────
-function AiMode({ categories, subTopics, onClose, onSaved }: {
+function AiMode({ categories, subTopics, onClose, onSaved, onSubTopicAdded }: {
   categories: CategoryItem[];
   subTopics: SubTopicItem[];
   onClose: () => void;
   onSaved: () => void;
+  onSubTopicAdded?: (sub: SubTopicItem) => void;
 }) {
   const [rawText, setRawText] = useState("");
   const [count, setCount] = useState(1);
@@ -705,7 +822,7 @@ function AiMode({ categories, subTopics, onClose, onSaved }: {
           </p>
           {aiResults.map((result, i) => (
             <AiPreviewCard key={i} result={result} index={i} categories={categories} subTopics={subTopics}
-              onSave={(d) => saveItem(i, d)} onDiscard={() => discardItem(i)} />
+              onSave={(d) => saveItem(i, d)} onDiscard={() => discardItem(i)} onSubTopicAdded={onSubTopicAdded} />
           ))}
         </div>
       )}
@@ -714,11 +831,12 @@ function AiMode({ categories, subTopics, onClose, onSaved }: {
 }
 
 // ─── טופס העלאה ידנית ──────────────────────────────────────────────────────
-function ManualMode({ categories, subTopics, onClose, onSaved }: {
+function ManualMode({ categories, subTopics, onClose, onSaved, onSubTopicAdded }: {
   categories: CategoryItem[];
   subTopics: SubTopicItem[];
   onClose: () => void;
   onSaved: () => void;
+  onSubTopicAdded?: (sub: SubTopicItem) => void;
 }) {
   const [title, setTitle] = useState("");
   const [teaser, setTeaser] = useState("");
@@ -833,6 +951,7 @@ function ManualMode({ categories, subTopics, onClose, onSaved }: {
           selectedSubIds={selectedSubs}
           onChangeCats={setSelectedCats}
           onChangeSubs={setSelectedSubs}
+          onSubTopicAdded={onSubTopicAdded}
         />
         {selectedCats.length === 0 && (
           <p className="text-xs text-amber-600">⚠ חובה לבחור לפחות קטגוריה אחת</p>
@@ -868,6 +987,20 @@ export default function DivreiToraList({ drafts, published, categories, subTopic
   const router = useRouter();
   const [mode, setMode] = useState<"none" | "ai" | "manual">("none");
   const [editingItem, setEditingItem] = useState<DivarToraItem | null>(null);
+  const [localSubTopics, setLocalSubTopics] = useState<SubTopicItem[]>(subTopics);
+
+  // סנכרון עם props אחרי router.refresh — שומר על הוספות מקומיות שטרם נסנכרנו
+  useEffect(() => {
+    setLocalSubTopics((prev) => {
+      const ids = new Set(subTopics.map((s) => s._id));
+      const localOnly = prev.filter((s) => !ids.has(s._id));
+      return [...subTopics, ...localOnly];
+    });
+  }, [subTopics]);
+
+  function handleSubTopicAdded(sub: SubTopicItem) {
+    setLocalSubTopics((prev) => [...prev, sub]);
+  }
 
   function refresh() {
     setMode("none");
@@ -895,9 +1028,10 @@ export default function DivreiToraList({ drafts, published, categories, subTopic
         <EditModal
           item={editingItem}
           categories={categories}
-          subTopics={subTopics}
+          subTopics={localSubTopics}
           onClose={() => setEditingItem(null)}
           onSaved={handleEditSaved}
+          onSubTopicAdded={handleSubTopicAdded}
         />
       )}
       {/* בחירת מצב יצירה */}
@@ -946,10 +1080,10 @@ export default function DivreiToraList({ drafts, published, categories, subTopic
       )}
 
       {mode === "ai" && (
-        <AiMode categories={categories} subTopics={subTopics} onClose={() => setMode("none")} onSaved={refresh} />
+        <AiMode categories={categories} subTopics={localSubTopics} onClose={() => setMode("none")} onSaved={refresh} onSubTopicAdded={handleSubTopicAdded} />
       )}
       {mode === "manual" && (
-        <ManualMode categories={categories} subTopics={subTopics} onClose={() => setMode("none")} onSaved={refresh} />
+        <ManualMode categories={categories} subTopics={localSubTopics} onClose={() => setMode("none")} onSaved={refresh} onSubTopicAdded={handleSubTopicAdded} />
       )}
 
       {/* טיוטות */}

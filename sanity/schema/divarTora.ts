@@ -93,6 +93,22 @@ export const divarToraSchema = defineType({
       readOnly: true,
       description: "מתעדכן אוטומטית בכל הורדת Word",
     }),
+    defineField({
+      name: "viewCount",
+      title: "מספר צפיות",
+      type: "number",
+      initialValue: 0,
+      readOnly: true,
+      description: "מתעדכן אוטומטית בכל כניסה לדף",
+    }),
+    defineField({
+      name: "shareCount",
+      title: "מספר שיתופים",
+      type: "number",
+      initialValue: 0,
+      readOnly: true,
+      description: "מתעדכן אוטומטית בכל לחיצה על כפתור שיתוף",
+    }),
   ],
   preview: {
     select: { title: "title", subtitle: "teaser" },

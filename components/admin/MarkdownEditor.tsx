@@ -47,10 +47,10 @@ export default function MarkdownEditor({
       // Insert "> " at start of each selected line; if no selection, start a new quoted line.
       if (selected.length === 0) {
         const needsNewline = before.length > 0 && !before.endsWith("\n");
-        const insert = `${needsNewline ? "\n" : ""}> ציטוט\n`;
+        const insert = `${needsNewline ? "\n" : ""}> `;
         next = `${before}${insert}${after}`;
         nextStart = before.length + (needsNewline ? 1 : 0) + 2;
-        nextEnd = nextStart + "ציטוט".length;
+        nextEnd = nextStart;
       } else {
         const quoted = selected
           .split("\n")
@@ -64,7 +64,7 @@ export default function MarkdownEditor({
 
     onChange(next);
     requestAnimationFrame(() => {
-      ta.focus();
+      ta.focus({ preventScroll: true });
       ta.setSelectionRange(nextStart, nextEnd);
     });
   }

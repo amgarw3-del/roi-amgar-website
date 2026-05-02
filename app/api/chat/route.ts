@@ -15,6 +15,25 @@ import {
   lookupBySlug,
   type IndexedDoc,
 } from "@/lib/chat/doc-index";
+import { client } from "@/sanity/client";
+
+const SITE_STATS_ID = "siteStats-singleton";
+
+async function incrementChatCount() {
+  try {
+    await client
+      .createIfNotExists({ _id: SITE_STATS_ID, _type: "siteStats", chatCount: 0 })
+      .catch(() => {});
+    await client
+      .patch(SITE_STATS_ID)
+      .setIfMissing({ chatCount: 0 })
+      .inc({ chatCount: 1 })
+      .set({ chatCountUpdatedAt: new Date().toISOString() })
+      .commit();
+  } catch {
+    // אל תכשיל את ה-chat בגלל בעיית מעקב
+  }
+}
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -170,6 +189,9 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  // עדכון מונה שאלות AI Chat (אסינכרוני, לא חוסם)
+  void incrementChatCount();
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
