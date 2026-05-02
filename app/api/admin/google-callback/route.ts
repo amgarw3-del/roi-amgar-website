@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminSession, SESSION_COOKIE_NAME } from "@/lib/admin-auth";
+import { createAdminSession, verifyOAuthState, isAllowedOriginHost } from "@/lib/admin-auth";
+
+const REGISTERED_CALLBACK_HOST = "website-seven-kappa-25.vercel.app";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -7,21 +9,20 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get("state");
   const error = searchParams.get("error");
 
-  const loginUrl = new URL("/admin/login", req.url);
+  // ה-state חתום ומכיל את הדומיין המקורי
+  const verified = state ? await verifyOAuthState(state) : null;
+  const originHost = verified && isAllowedOriginHost(verified.originHost)
+    ? verified.originHost
+    : REGISTERED_CALLBACK_HOST;
 
-  if (error || !code || !state) {
-    loginUrl.searchParams.set("error", "google_cancelled");
+  const loginUrl = new URL(`https://${originHost}/admin/login`);
+
+  if (error || !code || !verified) {
+    loginUrl.searchParams.set("error", error ? "google_cancelled" : "state_mismatch");
     return NextResponse.redirect(loginUrl);
   }
 
-  const storedState = req.cookies.get("oauth_state")?.value;
-  if (!storedState || storedState !== state) {
-    loginUrl.searchParams.set("error", "state_mismatch");
-    return NextResponse.redirect(loginUrl);
-  }
-
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.get("host")}`;
-  const redirectUri = `${baseUrl}/api/admin/google-callback`;
+  const redirectUri = `https://${REGISTERED_CALLBACK_HOST}/api/admin/google-callback`;
 
   try {
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -48,22 +49,15 @@ export async function GET(req: NextRequest) {
     const allowedEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim());
     if (!email || !allowedEmails.includes(email)) {
       loginUrl.searchParams.set("error", "not_authorized");
-      const response = NextResponse.redirect(loginUrl);
-      response.cookies.delete("oauth_state");
-      return response;
+      return NextResponse.redirect(loginUrl);
     }
 
     const sessionToken = await createAdminSession();
-    const response = NextResponse.redirect(new URL("/admin", req.url));
-    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: 30 * 24 * 60 * 60,
-    });
-    response.cookies.delete("oauth_state");
-    return response;
+
+    // העברה לדומיין המקורי — שם ייקבע ה-cookie ויתבצע redirect ל-/admin
+    const finishUrl = new URL(`https://${originHost}/api/admin/finish-login`);
+    finishUrl.searchParams.set("token", sessionToken);
+    return NextResponse.redirect(finishUrl);
   } catch {
     loginUrl.searchParams.set("error", "auth_failed");
     return NextResponse.redirect(loginUrl);
