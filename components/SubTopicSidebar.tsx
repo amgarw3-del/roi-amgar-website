@@ -8,7 +8,7 @@ interface SubTopic {
   _id: string;
   hebrewName: string;
   slug: { current: string };
-  group: "moed" | "parasha" | "fast" | "national";
+  group: "moed" | "parasha" | "fast" | "national" | "general";
 }
 
 interface Props {
@@ -21,9 +21,10 @@ interface Props {
   allLabel?: string;
 }
 
-const GROUP_ORDER = ["moed", "parasha", "fast", "national"] as const;
+const GROUP_ORDER = ["general", "moed", "parasha", "fast", "national"] as const;
 
 const GROUP_LABELS: Record<string, string> = {
+  general: "כללי",
   moed: "מועדים",
   parasha: "פרשת שבוע",
   fast: "צומות",

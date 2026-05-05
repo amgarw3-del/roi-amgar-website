@@ -58,6 +58,7 @@ function CategoryGrid({
   onChangeCats,
   onChangeSubs,
   onSubTopicAdded,
+  onSubTopicUpdated,
 }: {
   categories: CategoryItem[];
   subTopics: SubTopicItem[];
@@ -66,12 +67,14 @@ function CategoryGrid({
   onChangeCats: (ids: string[]) => void;
   onChangeSubs: (ids: string[]) => void;
   onSubTopicAdded?: (sub: SubTopicItem) => void;
+  onSubTopicUpdated?: (sub: SubTopicItem) => void;
 }) {
   const [showSubs, setShowSubs] = useState(false);
   const [showAddSub, setShowAddSub] = useState(false);
   const [newSubName, setNewSubName] = useState("");
   const [newSubGroup, setNewSubGroup] = useState<string>("general");
   const [savingSub, setSavingSub] = useState(false);
+  const [editingSub, setEditingSub] = useState<SubTopicItem | null>(null);
 
   async function handleAddSub() {
     if (!newSubName.trim()) return;
@@ -97,6 +100,39 @@ function CategoryGrid({
       onChangeSubs([...selectedSubIds, newSub._id]);
       setNewSubName("");
       setShowAddSub(false);
+    } catch (err) {
+      alert(`שגיאת רשת: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setSavingSub(false);
+    }
+  }
+
+  async function handleUpdateSub() {
+    if (!editingSub || !editingSub.hebrewName.trim()) return;
+    setSavingSub(true);
+    try {
+      const res = await fetch("/api/admin/save-subtopic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          _id: editingSub._id,
+          hebrewName: editingSub.hebrewName.trim(),
+          group: editingSub.group,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`שגיאה: ${data.error ?? res.status}`);
+        return;
+      }
+      const updated: SubTopicItem = {
+        _id: data._id,
+        hebrewName: data.hebrewName ?? editingSub.hebrewName,
+        slug: { current: data.slug?.current ?? editingSub.slug.current },
+        group: data.group ?? editingSub.group,
+      };
+      onSubTopicUpdated?.(updated);
+      setEditingSub(null);
     } catch (err) {
       alert(`שגיאת רשת: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -130,6 +166,50 @@ function CategoryGrid({
 
   return (
     <div className="flex flex-col gap-3">
+      {/* מודאל עריכת תת-נושא */}
+      {editingSub && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" onClick={() => setEditingSub(null)}>
+          <div className="bg-white rounded-2xl p-5 w-72 shadow-2xl" dir="rtl" onClick={(e) => e.stopPropagation()}>
+            <p className="font-bold mb-3 text-sm" style={{ color: "var(--color-primary)" }}>עריכת תת-נושא</p>
+            <input
+              autoFocus
+              className="border border-gray-200 rounded-lg px-3 py-2 w-full mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              value={editingSub.hebrewName}
+              onChange={(e) => setEditingSub({ ...editingSub, hebrewName: e.target.value })}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleUpdateSub(); } if (e.key === "Escape") setEditingSub(null); }}
+              placeholder="שם תת-נושא"
+            />
+            <select
+              className="border border-gray-200 rounded-lg px-3 py-2 w-full mb-3 text-sm focus:outline-none"
+              value={editingSub.group ?? "general"}
+              onChange={(e) => setEditingSub({ ...editingSub, group: e.target.value })}
+            >
+              {SUBTOPIC_GROUPS.map((g) => (
+                <option key={g.value} value={g.value}>{g.title}</option>
+              ))}
+            </select>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleUpdateSub}
+                disabled={savingSub || !editingSub.hebrewName.trim()}
+                className="flex-1 text-xs py-2 rounded-lg font-bold text-white disabled:opacity-50"
+                style={{ background: "var(--color-primary)" }}
+              >
+                {savingSub ? "שומר..." : "✓ שמור"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingSub(null)}
+                className="flex-1 text-xs py-2 rounded-lg font-medium text-gray-500 border hover:bg-gray-50"
+              >
+                בטל
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* קטגוריות ראשיות */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -212,18 +292,27 @@ function CategoryGrid({
                   {items.map((st) => {
                     const isSelected = selectedSubIds.includes(st._id);
                     return (
-                      <button
-                        key={st._id}
-                        type="button"
-                        onClick={() => toggleSub(st._id)}
-                        className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium ${
-                          isSelected ? "text-white border-transparent" : "border-gray-300 text-gray-600 hover:border-gray-400"
-                        }`}
-                        style={isSelected ? { background: "var(--color-accent)", borderColor: "var(--color-accent)" } : {}}
-                      >
-                        {st.hebrewName}
-                        {isSelected && " ✓"}
-                      </button>
+                      <div key={st._id} className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleSub(st._id)}
+                          className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium ${
+                            isSelected ? "text-white border-transparent" : "border-gray-300 text-gray-600 hover:border-gray-400"
+                          }`}
+                          style={isSelected ? { background: "var(--color-accent)", borderColor: "var(--color-accent)" } : {}}
+                        >
+                          {st.hebrewName}
+                          {isSelected && " ✓"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setEditingSub({ ...st }); }}
+                          className="p-1 rounded-full text-gray-300 hover:text-blue-400 hover:bg-blue-50 transition-colors"
+                          title="ערוך תת-נושא"
+                        >
+                          <Pencil size={10} />
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -356,13 +445,14 @@ function ShareModal({ item, onClose }: { item: DivarToraItem; onClose: () => voi
 }
 
 // ─── מודל עריכת דבר תורה קיים ────────────────────────────────────────────────
-function EditModal({ item, categories, subTopics, onClose, onSaved, onSubTopicAdded }: {
+function EditModal({ item, categories, subTopics, onClose, onSaved, onSubTopicAdded, onSubTopicUpdated }: {
   item: DivarToraItem;
   categories: CategoryItem[];
   subTopics: SubTopicItem[];
   onClose: () => void;
   onSaved: () => void;
   onSubTopicAdded?: (sub: SubTopicItem) => void;
+  onSubTopicUpdated?: (sub: SubTopicItem) => void;
 }) {
   const [title, setTitle] = useState(item.title);
   const [teaser, setTeaser] = useState(item.teaser ?? "");
@@ -499,6 +589,7 @@ function EditModal({ item, categories, subTopics, onClose, onSaved, onSubTopicAd
           onChangeCats={setSelectedCats}
           onChangeSubs={setSelectedSubs}
           onSubTopicAdded={onSubTopicAdded}
+          onSubTopicUpdated={onSubTopicUpdated}
         />
 
         {/* סטאטוס */}
@@ -621,7 +712,7 @@ function DivarRow({ item, canPublish, onPublish, onDelete, onEdit }: {
 
 // ─── כרטיסיית AI: עריכה + שמירה עם בחירת קטגוריות ───────────────────────
 function AiPreviewCard({
-  result, index, categories, subTopics, onSave, onDiscard, onSubTopicAdded,
+  result, index, categories, subTopics, onSave, onDiscard, onSubTopicAdded, onSubTopicUpdated,
 }: {
   result: AiResult;
   index: number;
@@ -630,6 +721,7 @@ function AiPreviewCard({
   onSave: (data: { title: string; teaser: string; content: string; categoryIds: string[]; subTopicIds: string[]; status: "draft" | "published" }) => Promise<void>;
   onDiscard: () => void;
   onSubTopicAdded?: (sub: SubTopicItem) => void;
+  onSubTopicUpdated?: (sub: SubTopicItem) => void;
 }) {
   const [title, setTitle] = useState(result.title);
   const [teaser, setTeaser] = useState(result.teaser);
@@ -682,6 +774,7 @@ function AiPreviewCard({
           onChangeCats={setSelectedCats}
           onChangeSubs={setSelectedSubs}
           onSubTopicAdded={onSubTopicAdded}
+          onSubTopicUpdated={onSubTopicUpdated}
         />
         <div>
           <label className="text-xs font-medium text-gray-500 block mb-1">פרסום</label>
@@ -707,12 +800,13 @@ function AiPreviewCard({
 }
 
 // ─── טופס AI (Gemini/Anthropic) ────────────────────────────────────────────
-function AiMode({ categories, subTopics, onClose, onSaved, onSubTopicAdded }: {
+function AiMode({ categories, subTopics, onClose, onSaved, onSubTopicAdded, onSubTopicUpdated }: {
   categories: CategoryItem[];
   subTopics: SubTopicItem[];
   onClose: () => void;
   onSaved: () => void;
   onSubTopicAdded?: (sub: SubTopicItem) => void;
+  onSubTopicUpdated?: (sub: SubTopicItem) => void;
 }) {
   const [rawText, setRawText] = useState("");
   const [count, setCount] = useState(1);
@@ -822,7 +916,7 @@ function AiMode({ categories, subTopics, onClose, onSaved, onSubTopicAdded }: {
           </p>
           {aiResults.map((result, i) => (
             <AiPreviewCard key={i} result={result} index={i} categories={categories} subTopics={subTopics}
-              onSave={(d) => saveItem(i, d)} onDiscard={() => discardItem(i)} onSubTopicAdded={onSubTopicAdded} />
+              onSave={(d) => saveItem(i, d)} onDiscard={() => discardItem(i)} onSubTopicAdded={onSubTopicAdded} onSubTopicUpdated={onSubTopicUpdated} />
           ))}
         </div>
       )}
@@ -831,12 +925,13 @@ function AiMode({ categories, subTopics, onClose, onSaved, onSubTopicAdded }: {
 }
 
 // ─── טופס העלאה ידנית ──────────────────────────────────────────────────────
-function ManualMode({ categories, subTopics, onClose, onSaved, onSubTopicAdded }: {
+function ManualMode({ categories, subTopics, onClose, onSaved, onSubTopicAdded, onSubTopicUpdated }: {
   categories: CategoryItem[];
   subTopics: SubTopicItem[];
   onClose: () => void;
   onSaved: () => void;
   onSubTopicAdded?: (sub: SubTopicItem) => void;
+  onSubTopicUpdated?: (sub: SubTopicItem) => void;
 }) {
   const [title, setTitle] = useState("");
   const [teaser, setTeaser] = useState("");
@@ -952,6 +1047,7 @@ function ManualMode({ categories, subTopics, onClose, onSaved, onSubTopicAdded }
           onChangeCats={setSelectedCats}
           onChangeSubs={setSelectedSubs}
           onSubTopicAdded={onSubTopicAdded}
+          onSubTopicUpdated={onSubTopicUpdated}
         />
         {selectedCats.length === 0 && (
           <p className="text-xs text-amber-600">⚠ חובה לבחור לפחות קטגוריה אחת</p>
@@ -1002,6 +1098,12 @@ export default function DivreiToraList({ drafts, published, categories, subTopic
     setLocalSubTopics((prev) => [...prev, sub]);
   }
 
+  function handleSubTopicUpdated(sub: SubTopicItem) {
+    setLocalSubTopics((prev) =>
+      prev.map((s) => (s._id === sub._id ? { ...s, ...sub } : s))
+    );
+  }
+
   function refresh() {
     setMode("none");
     router.refresh();
@@ -1032,6 +1134,7 @@ export default function DivreiToraList({ drafts, published, categories, subTopic
           onClose={() => setEditingItem(null)}
           onSaved={handleEditSaved}
           onSubTopicAdded={handleSubTopicAdded}
+          onSubTopicUpdated={handleSubTopicUpdated}
         />
       )}
       {/* בחירת מצב יצירה */}
@@ -1080,10 +1183,10 @@ export default function DivreiToraList({ drafts, published, categories, subTopic
       )}
 
       {mode === "ai" && (
-        <AiMode categories={categories} subTopics={localSubTopics} onClose={() => setMode("none")} onSaved={refresh} onSubTopicAdded={handleSubTopicAdded} />
+        <AiMode categories={categories} subTopics={localSubTopics} onClose={() => setMode("none")} onSaved={refresh} onSubTopicAdded={handleSubTopicAdded} onSubTopicUpdated={handleSubTopicUpdated} />
       )}
       {mode === "manual" && (
-        <ManualMode categories={categories} subTopics={localSubTopics} onClose={() => setMode("none")} onSaved={refresh} onSubTopicAdded={handleSubTopicAdded} />
+        <ManualMode categories={categories} subTopics={localSubTopics} onClose={() => setMode("none")} onSaved={refresh} onSubTopicAdded={handleSubTopicAdded} onSubTopicUpdated={handleSubTopicUpdated} />
       )}
 
       {/* טיוטות */}
