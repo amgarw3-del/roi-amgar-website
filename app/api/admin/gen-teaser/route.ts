@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { callGemini } from "@/lib/gemini";
+import { requireAdmin } from "@/lib/require-admin";
 
 const SYSTEM = `אתה עוזר לרב רועי אמגר לכתוב תקציר קצר לדבר תורה.
 
@@ -9,6 +10,9 @@ const SYSTEM = `אתה עוזר לרב רועי אמגר לכתוב תקציר �
 החזר JSON בלבד: { "teaser": "..." }`;
 
 export async function POST(req: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const { content } = (await req.json().catch(() => ({}))) as { content?: string };
     if (!content?.trim()) return NextResponse.json({ error: "תוכן חסר" }, { status: 400 });

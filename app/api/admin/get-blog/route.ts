@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
+import { requireAdmin } from "@/lib/require-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,9 @@ const sanity = createClient({
 type Block = { _type?: string; children?: { text?: string }[] };
 
 export async function POST(req: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   const { _id } = (await req.json().catch(() => ({}))) as { _id?: string };
   if (!_id) return NextResponse.json({ error: "חסר מזהה" }, { status: 400 });
   const post = await sanity.fetch<{

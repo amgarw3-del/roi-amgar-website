@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
+import { requireAdmin } from "@/lib/require-admin";
 
 const sanity = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
@@ -10,6 +11,9 @@ const sanity = createClient({
 });
 
 export async function POST(req: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   const { id, hidden } = await req.json() as { id: string; hidden: boolean };
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 

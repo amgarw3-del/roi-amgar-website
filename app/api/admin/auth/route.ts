@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminSession, SESSION_COOKIE_NAME } from "@/lib/admin-auth";
+import { createAdminSession, safeEqual, SESSION_COOKIE_NAME } from "@/lib/admin-auth";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const { password } = body as { password?: string };
   const adminPassword = process.env.ADMIN_PASSWORD;
 
-  if (!adminPassword || !password || password !== adminPassword) {
+  if (!adminPassword || !password || !safeEqual(password, adminPassword)) {
     return NextResponse.json({ error: "סיסמה שגויה" }, { status: 401 });
   }
 

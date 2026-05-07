@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@sanity/client";
 import { STYLE_NOTES, STYLE_EXAMPLES } from "@/lib/dvar-tora-examples";
 import { callGemini } from "@/lib/gemini";
+import { requireAdmin } from "@/lib/require-admin";
 
 const sanity = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
@@ -78,6 +79,9 @@ async function callAnthropic(systemPrompt: string, userPrompt: string, maxTokens
 }
 
 export async function POST(req: NextRequest) {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   try {
     const body = await req.json().catch(() => null) as { text?: string; count?: number; provider?: string } | null;
     if (!body) {

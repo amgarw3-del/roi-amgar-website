@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
 import { smartTagSubtopics } from "@/lib/smart-tag-subtopics";
 import { slugToRef } from "@/lib/parasha-map";
+import { requireAdmin } from "@/lib/require-admin";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   const sanity = createClient({
     projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
     dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",

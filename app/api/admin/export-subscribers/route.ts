@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
+import { requireAdmin } from "@/lib/require-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,9 @@ function csvEscape(v: string) {
 }
 
 export async function GET() {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
   const subs = await sanity.fetch<{
     name?: string; email: string; phone?: string; createdAt?: string;
   }[]>(`*[_type == "subscriber" && defined(email)] | order(createdAt desc) {
