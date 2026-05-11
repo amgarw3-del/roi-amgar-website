@@ -1,0 +1,59 @@
+name: Weekly Divrei Tora Cron
+
+# חינמי לחלוטין דרך GitHub Actions (במקום Vercel Pro cron).
+# רץ כל שעה ובודק אם יש אירוע יהודי בעוד ~30 שעות.
+
+on:
+  schedule:
+    # כל שעה עגולה (UTC). שעון ישראל = UTC+2 חורף / UTC+3 קיץ.
+    - cron: "0 * * * *"
+  # מאפשר הפעלה ידנית מ-GitHub UI לבדיקות
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (לא שולח בפועל)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      date:
+        description: "תאריך לסימולציה (YYYY-MM-DD), ריק=עכשיו"
+        required: false
+        default: ""
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Build query string
+        id: query
+        run: |
+          QS=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            QS="?dry=true"
+          fi
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            if [ -z "$QS" ]; then
+              QS="?date=${{ github.event.inputs.date }}"
+            else
+              QS="${QS}&date=${{ github.event.inputs.date }}"
+            fi
+          fi
+          echo "qs=$QS" >> $GITHUB_OUTPUT
+
+      - name: Trigger Vercel cron endpoint
+        run: |
+          RESP=$(curl -sS -w "\n__HTTP_STATUS__%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/weekly-divrei${{ steps.query.outputs.qs }}")
+          BODY=$(echo "$RESP" | sed '/__HTTP_STATUS__/,$d')
+          STATUS=$(echo "$RESP" | grep "__HTTP_STATUS__" | sed 's/__HTTP_STATUS__//')
+          echo "HTTP Status: $STATUS"
+          echo "Response: $BODY"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Cron endpoint returned status $STATUS"
+            exit 1
+          fi
