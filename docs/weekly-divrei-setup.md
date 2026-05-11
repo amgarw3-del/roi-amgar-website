@@ -57,20 +57,28 @@ git commit -m "feat: weekly divrei tora WhatsApp automation"
 git push
 ```
 
-ה-cron יופעל אוטומטית ב-Production.
+## שלב 6: הגדרת GitHub Secrets (חינמי במקום Vercel Pro)
 
-## שלב 6: בדיקה ידנית (dry run)
+ה-cron רץ דרך GitHub Actions (חינמי לחלוטין) במקום Vercel Pro cron.
 
-לבדוק בלי לשלוח:
+לך ל: **GitHub repo → Settings → Secrets and variables → Actions → New repository secret**
+הוסף 2 secrets:
+- `CRON_SECRET` — אותו ערך שב-Vercel env
+- `SITE_URL` — `https://website-seven-kappa-25.vercel.app`
+
+ה-workflow ירוץ אוטומטית כל שעה.
+
+## שלב 7: בדיקה ידנית (dry run)
+
+### דרך GitHub Actions UI (הכי קל):
+1. לך ל-repo → Actions → "Weekly Divrei Tora Cron"
+2. לחץ "Run workflow" → סמן `dry_run=true` + תאריך עתידי → Run
+3. בדוק את ה-logs
+
+### דרך URL ישיר:
 ```
-https://website-seven-kappa-25.vercel.app/api/cron/weekly-divrei?dry=true&date=2026-09-25
-```
-
-(הוסף header: `Authorization: Bearer <CRON_SECRET>`)
-
-לבדיקה חיה לטלפון שלך:
-```
-https://website-seven-kappa-25.vercel.app/api/cron/weekly-divrei?date=2026-09-25
+curl -H "Authorization: Bearer <CRON_SECRET>" \
+  "https://website-seven-kappa-25.vercel.app/api/cron/weekly-divrei?dry=true&date=2026-09-25"
 ```
 
 ## שלב 7: אישור עיצוב התמונה
