@@ -74,6 +74,20 @@ export const divarToraSchema = defineType({
     defineField({ name: "publishedAt", title: "תאריך פרסום", type: "datetime" }),
     defineField({ name: "emailedAt", title: "נשלח למייל בתאריך", type: "datetime" }),
     defineField({
+      name: "shortId",
+      title: "מזהה קצר ל-URL",
+      type: "string",
+      description: "מזהה 6 תווים לקישור קצר /d/[id]. נוצר אוטומטית בעת שליחת ניוזלטר.",
+      readOnly: true,
+    }),
+    defineField({
+      name: "lastSentAt",
+      title: "נשלח בוואטסאפ לאחרונה",
+      type: "datetime",
+      description: "עודכן אוטומטית ע\"י cron שליחת ניוזלטר שבועי",
+      readOnly: true,
+    }),
+    defineField({
       name: "status",
       title: "סטטוס",
       type: "string",

@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/youtube-health",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-divrei",
+      "schedule": "0 * * * *"
     }
   ]
 }
