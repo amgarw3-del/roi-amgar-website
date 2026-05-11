@@ -9,7 +9,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { SanityClient } from "@sanity/client";
 import { buildEventImagePrompt, buildEventCacheKey, type EventGroup } from "./image-prompts";
 
-const IMAGE_MODEL = "gemini-2.0-flash-exp"; // תומך ביצירת תמונות
+const IMAGE_MODEL = "gemini-2.5-flash-image"; // המודל היציב ליצירת תמונות
 
 export interface GenerateImageParams {
   eventName: string;
