@@ -54,8 +54,11 @@ export async function addHebrewTextOverlay(
   subtitle = "הרב רועי אמגר"
 ): Promise<Buffer> {
   const fontB64 = await getHebrewFontBase64();
-  const W = 1024;
-  const H = 1024;
+
+  // קרא את ממדי התמונה בפועל (Pollinations לא תמיד מחזיר 1024x1024)
+  const meta = await sharp(imageBuffer).metadata();
+  const W = meta.width ?? 1024;
+  const H = meta.height ?? 1024;
 
   // SVG overlay: גרדיאנט כהה למעלה ולמטה + טקסט זהב
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
