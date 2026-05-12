@@ -110,5 +110,5 @@ Output: square 1:1 image, 1024x1024 pixels.`;
  * v4 = cache bust לאחר חזרה לGemini עם טקסט עברי ב-prompt.
  */
 export function buildEventCacheKey(eventKey: string, hebrewYear: string): string {
-  return `${eventKey}-${hebrewYear}-v5`.replace(/[^a-z0-9-]/gi, "-");
+  return `${eventKey}-${hebrewYear}-v6`.replace(/[^a-z0-9-]/gi, "-");
 }
