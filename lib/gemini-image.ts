@@ -9,6 +9,7 @@
 
 import type { SanityClient } from "@sanity/client";
 import { buildEventImagePrompt, buildEventCacheKey, type EventGroup } from "./image-prompts";
+import { addHebrewTextOverlay } from "./image-overlay";
 
 const POLLINATIONS_BASE = "https://image.pollinations.ai/prompt";
 
@@ -71,20 +72,22 @@ export async function generateEventImage(params: GenerateImageParams): Promise<G
   }
 
   const arrayBuffer = await res.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  const rawBuffer = Buffer.from(arrayBuffer);
 
-  if (buffer.length < 1000) {
-    throw new Error(`Image too small (${buffer.length} bytes) - likely an error response`);
+  if (rawBuffer.length < 1000) {
+    throw new Error(`Image too small (${rawBuffer.length} bytes) - likely an error response`);
   }
 
-  // 3. העלאה ל-Sanity assets
-  const ext = contentType.split("/")[1] || "png";
+  // 3. הוספת overlay טקסט עברי (כותרת + "הרב רועי אמגר")
+  const buffer = await addHebrewTextOverlay(rawBuffer, params.eventName);
+
+  // 4. העלאה ל-Sanity assets (תמיד JPEG אחרי overlay)
   const asset = await sanity.assets.upload("image", buffer, {
-    filename: `event-${cacheKey}.${ext}`,
-    contentType,
+    filename: `event-${cacheKey}.jpg`,
+    contentType: "image/jpeg",
   });
 
-  // 4. שמירת רשומת cache
+  // 5. שמירת רשומת cache
   await sanity.create({
     _type: "eventImage",
     cacheKey,

@@ -70,52 +70,48 @@ const GROUP_FALLBACK: Record<EventGroup, ImagePromptConfig> = {
 };
 
 /**
- * מחזיר prompt מלא ליצירת תמונת אירוע
+ * מחזיר prompt מלא ליצירת תמונת אירוע.
+ * הטקסט העברי (כותרת + "הרב רועי אמגר") מוסף בנפרד דרך sharp overlay —
+ * לכן ה-prompt לא מבקש מה-AI ליצור טקסט כלל.
  */
 export function buildEventImagePrompt(params: {
-  eventName: string; // שם בעברית, יוצג בתמונה
-  eventKey?: string; // slug / מזהה למיפוי
+  eventName: string;
+  eventKey?: string;
   group: EventGroup;
 }): string {
-  const { eventName, eventKey, group } = params;
+  const { eventKey, group } = params;
 
   const config =
     (eventKey ? EVENT_MAP[eventKey] : undefined) ||
-    (EVENT_MAP[eventName] as ImagePromptConfig | undefined) ||
     GROUP_FALLBACK[group];
 
-  return `Create a square 1:1 ornate religious Jewish art piece, 1024x1024 pixels.
+  return `Square 1:1 sacred Jewish art image, 1024x1024 pixels.
 
-CRITICAL CONSTRAINTS — DO NOT VIOLATE:
-- NO PEOPLE, NO HUMAN FIGURES, NO FACES, NO PORTRAITS
-- NO silhouettes of people, NO hands, NO body parts
-- ONLY symbolic objects, architecture, and decorative elements
+ABSOLUTE RULES — DO NOT BREAK:
+- NO people, NO human figures, NO faces, NO hands, NO body parts
+- NO text, NO letters, NO writing, NO numbers anywhere in the image
+- NO busy patterns, NO cluttered backgrounds, NO overcrowded details
 
-Style: ornate biblical Hebrew manuscript illumination, like a medieval
-illuminated Torah scroll page or Mishneh Torah folio. Traditional
-Jewish art aesthetic with rich ${config.palette} color palette and deep
-gold accents. Decorative geometric and floral border ornaments in the
-style of Sephardic and Ashkenazi medieval manuscripts.
+Style: clean, elegant, minimalist sacred art with a single beautiful focal element.
+Rich atmospheric lighting, museum-quality digital painting.
+Color palette: ${config.palette}.
 
-Composition (top to bottom):
-1. TOP CENTER: Hebrew title "${eventName}" in large prominent gold
-   biblical-style calligraphy with ornate serifs and decorative flourishes.
-2. CENTER: Symbolic imagery (NO people): ${config.symbols}. Arranged
-   harmoniously within decorative arch frames or ornate borders.
-3. BOTTOM CENTER: Hebrew text "הרב רועי אמגר" in elegant smaller
-   gold script, centered horizontally.
+Composition:
+- Background: smooth dark gradient in ${config.palette} tones — calm and uncluttered
+- Center: ONE single main symbolic element, beautifully rendered with soft glowing light around it
+  Symbol: ${config.symbols.split(",")[0].trim()} — rendered with detail and reverence
+- A simple thin elegant gold border line framing the image
+- Plenty of breathing room — do NOT fill the image with many objects
 
-Surround the composition with decorative arches, columns, or ornate
-border patterns. Use atmospheric warm lighting that evokes sanctity
-and reverence. The overall feeling should be timeless, sacred, ornate,
-and museum-quality — like an artifact from a great Jewish library.
-
-Output: square 1:1 aspect ratio image, 1024x1024.`;
+Mood: calm, sacred, timeless, reverent. Think: a single candle in darkness,
+a single shofar on velvet — NOT a crowded market stall.
+Output: square 1:1, 1024x1024.`;
 }
 
 /**
- * מחזיר event key לcache (slug + שנה עברית)
+ * מחזיר event key לcache (slug + שנה עברית).
+ * v3 = cache bust לאחר שינוי prompt + הוספת overlay טקסט עברי.
  */
 export function buildEventCacheKey(eventKey: string, hebrewYear: string): string {
-  return `${eventKey}-${hebrewYear}`.replace(/[^a-z0-9-]/gi, "-");
+  return `${eventKey}-${hebrewYear}-v3`.replace(/[^a-z0-9-]/gi, "-");
 }
