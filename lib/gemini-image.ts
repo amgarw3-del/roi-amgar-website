@@ -1,15 +1,16 @@
 /**
  * lib/gemini-image.ts
  *
- * יצירת תמונת אירוע 1:1 דרך Gemini Image Generation API.
- * שמירת cache ב-Sanity לפי eventKey+year.
+ * יצירת תמונת אירוע 1:1 חינמית לחלוטין.
+ *
+ * משתמש ב-Pollinations.ai (חינמי, ללא מפתח API).
+ * שמורה שם זה נשמר כדי לא לשבור imports במקומות אחרים.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { SanityClient } from "@sanity/client";
 import { buildEventImagePrompt, buildEventCacheKey, type EventGroup } from "./image-prompts";
 
-const IMAGE_MODEL = "gemini-2.5-flash-image"; // המודל היציב ליצירת תמונות
+const POLLINATIONS_BASE = "https://image.pollinations.ai/prompt";
 
 export interface GenerateImageParams {
   eventName: string;
@@ -20,9 +21,7 @@ export interface GenerateImageParams {
 }
 
 export interface GeneratedImage {
-  /** URL מ-Sanity asset */
   url: string;
-  /** האם הגיע מ-cache */
   fromCache: boolean;
 }
 
@@ -43,37 +42,46 @@ export async function generateEventImage(params: GenerateImageParams): Promise<G
     return { url: cached.imageUrl, fromCache: true };
   }
 
-  // 2. יצירה דרך Gemini
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+  // 2. יצירה דרך Pollinations (חינמי, ללא key)
+  const prompt = buildEventImagePrompt({ eventName, eventKey, group });
+  const seed = hashString(cacheKey); // seed דטרמיניסטי לקבוע - אותה תמונה גם בקריאה חוזרת
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: IMAGE_MODEL,
-    // @ts-expect-error - responseModalities זמין במודלים תומכי תמונה
-    generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+  const url = new URL(`${POLLINATIONS_BASE}/${encodeURIComponent(prompt)}`);
+  url.searchParams.set("width", "1024");
+  url.searchParams.set("height", "1024");
+  url.searchParams.set("seed", seed.toString());
+  url.searchParams.set("model", "flux"); // המודל החינמי האיכותי ביותר ב-Pollinations
+  url.searchParams.set("nologo", "true");
+  url.searchParams.set("enhance", "true");
+
+  // הורדת הPNG
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: { "User-Agent": "RoiAmgarSite/1.0" },
   });
 
-  const prompt = buildEventImagePrompt({ eventName, eventKey, group });
-
-  const result = await model.generateContent([prompt]);
-  const parts = result.response.candidates?.[0]?.content?.parts || [];
-
-  // מציאת חלק התמונה
-  const imagePart = parts.find((p: any) => p.inlineData?.data);
-  if (!imagePart || !(imagePart as any).inlineData?.data) {
-    throw new Error("Gemini did not return an image. Check model availability.");
+  if (!res.ok) {
+    throw new Error(`Pollinations error: ${res.status} ${res.statusText}`);
   }
 
-  const base64 = (imagePart as any).inlineData.data;
-  const mimeType = (imagePart as any).inlineData.mimeType || "image/png";
-  const buffer = Buffer.from(base64, "base64");
+  const contentType = res.headers.get("content-type") || "image/png";
+  if (!contentType.startsWith("image/")) {
+    const body = await res.text();
+    throw new Error(`Unexpected content-type: ${contentType}. Body: ${body.slice(0, 200)}`);
+  }
+
+  const arrayBuffer = await res.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  if (buffer.length < 1000) {
+    throw new Error(`Image too small (${buffer.length} bytes) - likely an error response`);
+  }
 
   // 3. העלאה ל-Sanity assets
-  const ext = mimeType.split("/")[1] || "png";
+  const ext = contentType.split("/")[1] || "png";
   const asset = await sanity.assets.upload("image", buffer, {
     filename: `event-${cacheKey}.${ext}`,
-    contentType: mimeType,
+    contentType,
   });
 
   // 4. שמירת רשומת cache
@@ -91,4 +99,14 @@ export async function generateEventImage(params: GenerateImageParams): Promise<G
   });
 
   return { url: asset.url, fromCache: false };
+}
+
+/** Hash מחרוזת ל-seed deterministi */
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h) + s.charCodeAt(i);
+    h |= 0; // 32-bit
+  }
+  return Math.abs(h);
 }
