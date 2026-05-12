@@ -4,39 +4,23 @@
  * מוסיף overlay טקסט עברי על תמונה קיימת דרך sharp + SVG.
  * מטרה: הוספת שם הפרשה/מועד ו"הרב רועי אמגר" בזהב מעל תמונת Pollinations.
  *
- * הגופן Heebo Bold נטען מ-Google Fonts פעם אחת ונשמר ב-memory cache.
+ * הגופן Heebo-Bold-Hebrew.woff מגיע מ-public/fonts/ (מקוּנן בפרויקט).
  */
 
 import sharp from "sharp";
+import fs from "fs";
+import path from "path";
 
 let fontBase64Cache: string | null = null;
 
 /**
- * טוען גופן Heebo Bold מ-Google Fonts ומחזיר כ-base64.
- * מגיש User-Agent ישן כדי לקבל TTF (ולא woff2 שאינו נתמך ב-SVG של librsvg).
+ * קורא את גופן Heebo Hebrew Bold מ-public/fonts/ ומחזיר base64.
+ * מאוחסן ב-memory cache למהירות.
  */
-async function getHebrewFontBase64(): Promise<string> {
+function getHebrewFontBase64(): string {
   if (fontBase64Cache) return fontBase64Cache;
-
-  // בקשת CSS מ-Google Fonts עם UA ישן → מחזיר TTF URL
-  const css = await fetch(
-    "https://fonts.googleapis.com/css2?family=Heebo:wght@700",
-    {
-      headers: {
-        "User-Agent":
-          "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)",
-      },
-    }
-  ).then((r) => r.text());
-
-  // חיפוש URL הגופן ב-CSS
-  const match = css.match(/url\((https?:\/\/[^)]+)\)/);
-  if (!match) {
-    throw new Error(`Could not extract font URL from Google Fonts CSS:\n${css.slice(0, 500)}`);
-  }
-
-  const fontBuf = await fetch(match[1]).then((r) => r.arrayBuffer());
-  fontBase64Cache = Buffer.from(fontBuf).toString("base64");
+  const fontPath = path.join(process.cwd(), "public", "fonts", "Heebo-Bold-Hebrew.woff");
+  fontBase64Cache = fs.readFileSync(fontPath).toString("base64");
   return fontBase64Cache;
 }
 
@@ -44,8 +28,8 @@ async function getHebrewFontBase64(): Promise<string> {
  * מוסיף overlay טקסט עברי (כותרת למעלה + subtitle למטה) על תמונה.
  *
  * @param imageBuffer - תמונת המקור (PNG/JPEG)
- * @param title - שם הפרשה / מועד בעברית (למשל "פרשת במדבר")
- * @param subtitle - טקסט תחתון, ברירת מחדל "הרב רועי אמגר"
+ * @param title       - שם הפרשה / מועד בעברית (למשל "פרשת במדבר")
+ * @param subtitle    - טקסט תחתון, ברירת מחדל "הרב רועי אמגר"
  * @returns JPEG buffer עם הטקסט מוטמע
  */
 export async function addHebrewTextOverlay(
@@ -53,57 +37,57 @@ export async function addHebrewTextOverlay(
   title: string,
   subtitle = "הרב רועי אמגר"
 ): Promise<Buffer> {
-  const fontB64 = await getHebrewFontBase64();
+  const fontB64 = getHebrewFontBase64();
 
-  // קרא את ממדי התמונה בפועל (Pollinations לא תמיד מחזיר 1024x1024)
+  // קרא ממדי התמונה בפועל (Pollinations לא תמיד מחזיר 1024×1024)
   const meta = await sharp(imageBuffer).metadata();
   const W = meta.width ?? 1024;
   const H = meta.height ?? 1024;
 
-  // SVG overlay: גרדיאנט כהה למעלה ולמטה + טקסט זהב
+  // scale רספונסיבי לפי גודל התמונה
+  const scale = Math.min(W, H) / 1024;
+  const titleSize  = Math.round(70 * scale);
+  const subSize    = Math.round(42 * scale);
+  const topBandH   = Math.round(190 * scale);
+  const botBandH   = Math.round(140 * scale);
+  const titleY     = Math.round(112 * scale);
+  const subY       = H - Math.round(46 * scale);
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
     <defs>
       <style>
         @font-face {
           font-family: 'Heebo';
-          src: url('data:font/truetype;base64,${fontB64}') format('truetype');
+          src: url('data:font/woff;base64,${fontB64}') format('woff');
           font-weight: 700;
         }
       </style>
-      <linearGradient id="topGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"   stop-color="#000000" stop-opacity="0.80"/>
-        <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+      <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#000" stop-opacity="0.82"/>
+        <stop offset="100%" stop-color="#000" stop-opacity="0"/>
       </linearGradient>
-      <linearGradient id="botGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"   stop-color="#000000" stop-opacity="0"/>
-        <stop offset="100%" stop-color="#000000" stop-opacity="0.80"/>
+      <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#000" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#000" stop-opacity="0.82"/>
       </linearGradient>
     </defs>
 
-    <!-- פס כהה עליון לקריאות הכותרת -->
-    <rect x="0" y="0" width="${W}" height="190" fill="url(#topGrad)"/>
+    <!-- פסי גרדיאנט -->
+    <rect x="0" y="0"          width="${W}" height="${topBandH}" fill="url(#tg)"/>
+    <rect x="0" y="${H - botBandH}" width="${W}" height="${botBandH}" fill="url(#bg)"/>
 
-    <!-- פס כהה תחתון לקריאות ה-subtitle -->
-    <rect x="0" y="${H - 140}" width="${W}" height="140" fill="url(#botGrad)"/>
-
-    <!-- כותרת ראשית — שם הפרשה / מועד -->
-    <text
-      x="${W / 2}" y="112"
-      font-family="Heebo" font-weight="700" font-size="70"
-      fill="#FFD700"
-      text-anchor="middle"
-      direction="rtl"
-      dominant-baseline="middle"
+    <!-- כותרת ראשית -->
+    <text x="${W / 2}" y="${titleY}"
+      font-family="Heebo" font-weight="700" font-size="${titleSize}"
+      fill="#FFD700" text-anchor="middle"
+      direction="rtl" dominant-baseline="middle"
     >${title}</text>
 
-    <!-- כותרת משנית — שם הרב -->
-    <text
-      x="${W / 2}" y="${H - 46}"
-      font-family="Heebo" font-weight="700" font-size="42"
-      fill="#FFD700"
-      text-anchor="middle"
-      direction="rtl"
-      dominant-baseline="middle"
+    <!-- כותרת משנית -->
+    <text x="${W / 2}" y="${subY}"
+      font-family="Heebo" font-weight="700" font-size="${subSize}"
+      fill="#FFD700" text-anchor="middle"
+      direction="rtl" dominant-baseline="middle"
     >${subtitle}</text>
   </svg>`;
 
