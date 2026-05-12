@@ -32,6 +32,12 @@ function isShabbat(date: Date): boolean {
   return date.getDay() === 6;
 }
 
+/** מסיר ניקוד עברי ממחרוזת (שורקים, דגשים, חולמים וכו') */
+function stripNikud(s: string): string {
+  // U+0591-U+05C7: כל סימני הניקוד וטעמי המקרא בעברית
+  return s.replace(/[֑-ׇ]/g, '').trim();
+}
+
 /** מציאת השבת הבאה */
 function nextShabbat(from: Date): Date {
   const d = new Date(from);
@@ -126,15 +132,18 @@ export function getEventInWindow(now: Date, windowHoursMin: number, windowHoursM
         const hoursUntil = (evDate.getTime() - now.getTime()) / 3600000;
         if (hoursUntil >= windowHoursMin && hoursUntil <= windowHoursMax) {
           const hdate = ev.getDate();
-          const parashaName = ev.render("he").replace(/^פרשת\s+/, "");
+          const rawName = ev.render("he"); // "פָּרָשַׁת בְּמִדְבַּר" (עם ניקוד)
+          const cleanFull = stripNikud(rawName); // "פרשת במדבר"
+          const cleanShort = cleanFull.replace(/^פרשת\s+/, ""); // "במדבר"
           return {
-            nameHebrew: `פרשת ${parashaName}`,
-            eventKey: `parasha-${parashaName.replace(/\s+/g, "-")}`,
+            nameHebrew: cleanFull, // ללא ניקוד, להצגה
+            eventKey: `parasha-${cleanShort.replace(/\s+/g, "-")}`,
             group: "parasha",
             gregorianDate: evDate,
-            hebrewDate: hdate.renderGematriya(),
+            hebrewDate: stripNikud(hdate.renderGematriya()),
             hebrewYear: new HDate(now).getFullYear().toString(),
-            searchHints: [parashaName, `פרשת ${parashaName}`],
+            // searchHints ב-formats מרובים — להגדיל סיכוי למצוא match ב-Sanity
+            searchHints: [cleanShort, cleanFull, `פרשת ${cleanShort}`, rawName],
             hoursUntil,
           };
         }
