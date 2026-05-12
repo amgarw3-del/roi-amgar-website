@@ -28,14 +28,14 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       // Google Fonts
       "font-src 'self' https://fonts.gstatic.com",
-      // Scripts: self + Vercel analytics + Cloudflare Turnstile
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com",
-      // Images: self + YouTube thumbnails + Sanity CDN
-      "img-src 'self' data: blob: https://img.youtube.com https://i.ytimg.com https://i1.ytimg.com https://i2.ytimg.com https://i3.ytimg.com https://i4.ytimg.com https://cdn.sanity.io",
+      // Scripts: self + Vercel analytics + Cloudflare Turnstile + Google Analytics
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com",
+      // Images: self + YouTube thumbnails + Sanity CDN + GA4
+      "img-src 'self' data: blob: https://img.youtube.com https://i.ytimg.com https://i1.ytimg.com https://i2.ytimg.com https://i3.ytimg.com https://i4.ytimg.com https://cdn.sanity.io https://www.google-analytics.com https://www.googletagmanager.com",
       // Frames: YouTube embeds בלבד
       "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://challenges.cloudflare.com",
-      // Connect: Sanity API + external APIs
-      "connect-src 'self' https://*.sanity.io https://vitals.vercel-insights.com",
+      // Connect: Sanity API + external APIs + Google Analytics
+      "connect-src 'self' https://*.sanity.io https://vitals.vercel-insights.com https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net https://region1.google-analytics.com",
       // Manifest
       "manifest-src 'self'",
     ].join("; "),
@@ -44,7 +44,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   // Sanity Studio uses its own React internally — prevent bundling conflicts
-  serverExternalPackages: ["sanity", "@sanity/ui", "@sanity/vision"],
+  serverExternalPackages: ["sanity", "@sanity/ui", "@sanity/vision", "@resvg/resvg-js", "sharp"],
 
   async headers() {
     return [
