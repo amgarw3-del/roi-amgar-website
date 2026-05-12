@@ -2,9 +2,16 @@
  * lib/message-builder.ts
  *
  * בניית הטקסט המסוגנן של הודעת WhatsApp.
+ * תומך בדבר תורה בודד או כמה דברי תורה במקביל.
  */
 
 import { getGreeting, type GreetingContext } from "./greeting";
+
+export interface DivarItem {
+  title: string;
+  teaser: string;
+  shortLinkUrl: string;
+}
 
 export interface MessageInput {
   title: string;
@@ -14,42 +21,58 @@ export interface MessageInput {
   greetingContext: GreetingContext;
 }
 
+export interface MultiMessageInput {
+  items: DivarItem[];
+  newsletterUrl: string;
+  greetingContext: GreetingContext;
+}
+
 /**
- * מבנה ההודעה (וואטסאפ תומך ב-*bold* ו-_italic_):
- *
- * *[כותרת]*
- *
- * [טיזר]
- *
- * 🔗 לקריאה מלאה:
- * [קישור קצר]
- *
- * 📬 להצטרפות לניוזלטר:
- * [קישור ניוזלטר]
- *
- * [ברכה דינמית]
- * *הרב רועי אמגר*
+ * הודעת וואטסאפ לדבר תורה בודד.
  */
 export function buildWhatsAppMessage(input: MessageInput): string {
-  const { title, teaser, shortLinkUrl, newsletterUrl, greetingContext } = input;
+  return buildWhatsAppMultiMessage({
+    items: [{ title: input.title, teaser: input.teaser, shortLinkUrl: input.shortLinkUrl }],
+    newsletterUrl: input.newsletterUrl,
+    greetingContext: input.greetingContext,
+  });
+}
+
+/**
+ * הודעת וואטסאפ לכמה דברי תורה.
+ * אם יש אחד בלבד — אותו פורמט ישן.
+ * אם יש כמה — כל אחד עם הפרדת ─────.
+ */
+export function buildWhatsAppMultiMessage(input: MultiMessageInput): string {
+  const { items, newsletterUrl, greetingContext } = input;
   const greeting = getGreeting(greetingContext);
 
-  const lines = [
-    `*${title}*`,
-    "",
-    teaser.trim(),
-    "",
-    `🔗 לקריאה מלאה:`,
-    shortLinkUrl,
+  if (items.length === 0) return "";
+
+  const separator = "─────────────────";
+
+  const itemsText = items
+    .map((item) =>
+      [
+        `*${item.title}*`,
+        "",
+        item.teaser.trim(),
+        "",
+        `🔗 לקריאה מלאה:`,
+        item.shortLinkUrl,
+      ].join("\n")
+    )
+    .join(`\n\n${separator}\n\n`);
+
+  return [
+    itemsText,
     "",
     `📬 להצטרפות לניוזלטר:`,
     newsletterUrl,
     "",
     greeting,
     `*הרב רועי אמגר*`,
-  ];
-
-  return lines.join("\n");
+  ].join("\n");
 }
 
 /**

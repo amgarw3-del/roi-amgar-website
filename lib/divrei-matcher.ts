@@ -20,17 +20,16 @@ export interface MatchedDivarTora {
   publishedAt: string | null;
 }
 
-export async function findBestDivarTora(
+/** מחזיר את כל דברי התורה המתאימים לאירוע (ממוינים לפי lastSentAt) */
+export async function findAllDivreiTora(
   sanity: SanityClient,
   params: {
     group: EventGroup;
     searchHints: string[];
   }
-): Promise<MatchedDivarTora | null> {
+): Promise<MatchedDivarTora[]> {
   const { group, searchHints } = params;
 
-  // GROQ: דבר תורה מפורסם שיש לו subTopic מהקבוצה הרצויה
-  // ושמתאים לפי aliases/hebrewName של ה-subTopic
   const query = `
     *[
       _type == "divarTora" &&
@@ -41,7 +40,7 @@ export async function findBestDivarTora(
         count(subTopics[count((@->aliases)[@ in $hints]) > 0]) > 0 ||
         count(searchKeywords[@ in $hints]) > 0
       )
-    ] | order(coalesce(lastSentAt, "1970-01-01") asc, publishedAt desc) [0] {
+    ] | order(coalesce(lastSentAt, "1970-01-01") asc, publishedAt desc) {
       _id,
       title,
       "slug": slug.current,
@@ -52,12 +51,24 @@ export async function findBestDivarTora(
     }
   `;
 
-  const result = await sanity.fetch<MatchedDivarTora | null>(query, {
+  const results = await sanity.fetch<MatchedDivarTora[]>(query, {
     group,
     hints: searchHints,
   });
 
-  return result;
+  return results ?? [];
+}
+
+/** @deprecated השתמש ב-findAllDivreiTora */
+export async function findBestDivarTora(
+  sanity: SanityClient,
+  params: {
+    group: EventGroup;
+    searchHints: string[];
+  }
+): Promise<MatchedDivarTora | null> {
+  const all = await findAllDivreiTora(sanity, params);
+  return all[0] ?? null;
 }
 
 /** עדכון lastSentAt לאחר שליחה מוצלחת */

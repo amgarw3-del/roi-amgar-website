@@ -3,16 +3,16 @@
  *
  * Cron job — רץ כל שעה דרך GitHub Actions (חינמי).
  * אם יש אירוע יהודי בעוד 29-31 שעות:
- *   1. שולף דבר תורה מתאים מ-Sanity
- *   2. יוצר/מאחזר תמונת אירוע (Gemini, cached)
- *   3. בונה הודעת WhatsApp
- *   4. שולח גם למייל (Gmail — אמין) וגם לוואטסאפ (CallMeBot — best-effort)
- *   5. אם אין דבר תורה — שולח התראה לשני הערוצים
+ *   1. שולף את כל דברי התורה המתאימים מ-Sanity
+ *   2. יוצר/מאחזר תמונת אירוע (Pollinations.ai, cached)
+ *   3. בונה הודעת WhatsApp (כל דברי התורה בהודעה אחת)
+ *   4. שולח גם למייל (Gmail) וגם לוואטסאפ (Green API)
+ *   5. אם אין דבר תורה — שולח התראה
  *
  * Query params לבדיקה:
  *   ?dry=true             — לא שולח, רק מחזיר JSON
  *   ?date=2026-05-22      — סימולציה של תאריך אחר
- *   ?channels=email       — לשלוח רק למייל (default: שניהם)
+ *   ?channels=email       — לשלוח רק למייל
  *   ?channels=whatsapp    — לשלוח רק לוואטסאפ
  *
  * Auth: header `authorization: Bearer ${CRON_SECRET}`
@@ -21,9 +21,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
 import { getEventInWindow } from "@/lib/hebcal";
-import { findBestDivarTora, markAsSent, ensureShortId } from "@/lib/divrei-matcher";
+import { findAllDivreiTora, markAsSent, ensureShortId } from "@/lib/divrei-matcher";
 import { generateEventImage } from "@/lib/gemini-image";
-import { buildWhatsAppMessage, buildAlertMessage } from "@/lib/message-builder";
+import { buildWhatsAppMultiMessage, buildAlertMessage } from "@/lib/message-builder";
 import { getGreeting } from "@/lib/greeting";
 import { sendDivarToraMessage, sendWhatsAppText } from "@/lib/whatsapp-sender";
 import { sendGreenDivarTora, sendGreenText } from "@/lib/whatsapp-green-api";
@@ -74,13 +74,14 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const divar = await findBestDivarTora(sanity, {
+    // שולף את כל דברי התורה המתאימים
+    const divarList = await findAllDivreiTora(sanity, {
       group: event.group,
       searchHints: event.searchHints,
     });
 
-    // === אין דבר תורה — שליחת התראה לשני הערוצים ===
-    if (!divar) {
+    // === אין דבר תורה — שליחת התראה ===
+    if (divarList.length === 0) {
       const alertText = buildAlertMessage(event.nameHebrew, event.hebrewDate);
 
       if (dryRun) {
@@ -105,7 +106,6 @@ export async function GET(req: NextRequest) {
       }
 
       if (channels.includes("whatsapp")) {
-        // ניסיון 1: Green API (היציב)
         let sent = false;
         if (process.env.GREEN_API_ID_INSTANCE && process.env.GREEN_API_TOKEN) {
           try {
@@ -120,7 +120,6 @@ export async function GET(req: NextRequest) {
             results.whatsapp_green = `error: ${e instanceof Error ? e.message : String(e)}`;
           }
         }
-        // ניסיון 2: CallMeBot (fallback)
         if (!sent && process.env.CALLMEBOT_API_KEY) {
           try {
             const r = await sendWhatsAppText(alertText);
@@ -136,9 +135,40 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ status: "alert-sent", event: event.nameHebrew, results });
     }
 
-    // === יש דבר תורה ===
-    const shortId = divar.shortId || (await ensureShortId(sanity, divar._id));
+    // === יש דברי תורה ===
+    // וודא shortId לכל אחד
+    const divarListWithShortId = await Promise.all(
+      divarList.map(async (d) => ({
+        ...d,
+        shortId: d.shortId || (await ensureShortId(sanity, d._id)),
+      }))
+    );
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.haravroiamgar.com";
+    const newsletterUrl = process.env.NEWSLETTER_URL || `${siteUrl}/#newsletter`;
+
+    const greetingContext = {
+      group: event.group,
+      eventKey: event.eventKey,
+      eventName: event.nameHebrew,
+    };
+
+    // בניית רשימת הפריטים לכל דברי התורה
+    const items = divarListWithShortId.map((d) => ({
+      title: d.title,
+      teaser: d.teaser,
+      shortLinkUrl: `${siteUrl}/d/${d.shortId}`,
+    }));
+
+    const whatsappText = buildWhatsAppMultiMessage({
+      items,
+      newsletterUrl,
+      greetingContext,
+    });
+
+    const greeting = getGreeting(greetingContext);
+
+    // תמונה — מבוססת על האירוע (לא על דבר תורה ספציפי)
     let imageUrl: string | undefined;
     let imageError: string | undefined;
     try {
@@ -154,52 +184,37 @@ export async function GET(req: NextRequest) {
       imageError = e instanceof Error ? e.message : String(e);
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://website-seven-kappa-25.vercel.app";
-    const shortLinkUrl = `${siteUrl}/d/${shortId}`;
-    const newsletterUrl = process.env.NEWSLETTER_URL || `${siteUrl}/#newsletter`;
-
-    const greetingContext = {
-      group: event.group,
-      eventKey: event.eventKey,
-      eventName: event.nameHebrew,
-    };
-
-    const whatsappText = buildWhatsAppMessage({
-      title: divar.title,
-      teaser: divar.teaser,
-      shortLinkUrl,
-      newsletterUrl,
-      greetingContext,
-    });
-
-    const greeting = getGreeting(greetingContext);
-
     if (dryRun) {
       return NextResponse.json({
         status: "dry-run",
         channels,
         event,
-        divar: { id: divar._id, title: divar.title, shortId },
+        divarCount: divarListWithShortId.length,
+        divrei: divarListWithShortId.map((d) => ({ id: d._id, title: d.title, shortId: d.shortId })),
         imageUrl,
         imageError,
         whatsappText,
         emailPreview: {
-          subject: `📜 דבר תורה ל-${event.nameHebrew} (${event.hebrewDate}) — מוכן להפצה`,
+          subject: `📜 ${divarListWithShortId.length} דברי תורה ל-${event.nameHebrew} (${event.hebrewDate}) — מוכנים להפצה`,
           to: process.env.NOTIFICATION_EMAIL || process.env.GMAIL_USER,
         },
       });
     }
 
-    // === שליחה בפועל לשני הערוצים ===
+    // === שליחה בפועל ===
     const results: Record<string, unknown> = {};
 
-    // Email — אמין, ננסה תמיד אם בערוצים
+    // Email
     if (channels.includes("email")) {
       try {
+        // שולח את הדבר תורה הראשון ברשימה (החשוב ביותר) למייל,
+        // עם כל הקישורים של שאר דברי התורה בגוף
         await sendWeeklyDvarEmail({
-          title: divar.title,
-          teaser: divar.teaser,
-          shortLinkUrl,
+          title: divarListWithShortId.length === 1
+            ? divarListWithShortId[0].title
+            : `${divarListWithShortId.length} דברי תורה ל${event.nameHebrew}`,
+          teaser: divarListWithShortId[0].teaser,
+          shortLinkUrl: items[0].shortLinkUrl,
           imageUrl,
           newsletterUrl,
           greeting,
@@ -213,7 +228,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // WhatsApp — ניסיון 1: Green API (יציב), ניסיון 2: CallMeBot (fallback)
+    // WhatsApp
     if (channels.includes("whatsapp")) {
       let sent = false;
 
@@ -258,7 +273,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // עדכון lastSentAt (רק אם לפחות אחד עבר)
+    // עדכון lastSentAt לכל דברי התורה ששוגרו
     const anySuccess =
       results.email === "sent" ||
       (typeof results.whatsapp === "object" &&
@@ -266,14 +281,14 @@ export async function GET(req: NextRequest) {
         ((results.whatsapp as any).image === "sent" || (results.whatsapp as any).text === "sent"));
 
     if (anySuccess) {
-      await markAsSent(sanity, divar._id);
+      await Promise.all(divarListWithShortId.map((d) => markAsSent(sanity, d._id)));
     }
 
     return NextResponse.json({
       status: "sent",
       event: event.nameHebrew,
-      divarTitle: divar.title,
-      shortId,
+      divarCount: divarListWithShortId.length,
+      divrei: divarListWithShortId.map((d) => ({ title: d.title, shortId: d.shortId })),
       imageUrl,
       imageError,
       results,
