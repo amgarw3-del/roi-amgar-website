@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
+    "@fontsource/heebo": "^5.2.8",
     "@google-analytics/data": "^5.2.2",
     "@google/generative-ai": "^0.24.1",
     "@hebcal/core": "^6.4.1",
+    "@resvg/resvg-js": "^2.6.2",
     "@sanity/client": "^7.20.0",
     "@sanity/image-url": "^2.1.1",
     "@types/nodemailer": "^8.0.0",

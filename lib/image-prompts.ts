@@ -85,16 +85,12 @@ export function buildEventImagePrompt(params: {
     (eventKey ? EVENT_MAP[eventKey] : undefined) ||
     GROUP_FALLBACK[group];
 
-  return `Create a 1024x1024 square sacred Jewish art image.
+  return `Create a 1024x1024 square sacred Jewish art image. NO text, NO letters, NO writing of any kind.
 
 ABSOLUTE RULES:
 - NO people, NO human figures, NO faces, NO hands, NO body parts
+- NO text, NO letters, NO writing, NO calligraphy, NO inscriptions
 - Clean composition, not overcrowded
-
-Required Hebrew text — must appear exactly as written:
-- TOP CENTER: Hebrew text "${eventName}" — large font (70-80pt), bold, gold color (#FFD700), centered
-- BOTTOM CENTER: Hebrew text "הרב רועי אמגר" — medium font (44pt), bold, gold color (#FFD700), centered
-- Both texts must be clearly readable on a dark semi-transparent background strip
 
 Visual style: clean, elegant, minimalist sacred art.
 Color palette: ${config.palette}.
@@ -114,5 +110,5 @@ Output: square 1:1 image, 1024x1024 pixels.`;
  * v4 = cache bust לאחר חזרה לGemini עם טקסט עברי ב-prompt.
  */
 export function buildEventCacheKey(eventKey: string, hebrewYear: string): string {
-  return `${eventKey}-${hebrewYear}-v4`.replace(/[^a-z0-9-]/gi, "-");
+  return `${eventKey}-${hebrewYear}-v5`.replace(/[^a-z0-9-]/gi, "-");
 }

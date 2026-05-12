@@ -11,6 +11,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { SanityClient } from "@sanity/client";
 import { buildEventImagePrompt, buildEventCacheKey, type EventGroup } from "./image-prompts";
+import { addHebrewTextOverlay } from "./image-overlay";
 
 const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";
 const POLLINATIONS_BASE   = "https://image.pollinations.ai/prompt";
@@ -59,20 +60,28 @@ export async function generateEventImage(params: GenerateImageParams): Promise<G
     }
   }
 
-  // 3. fallback — Pollinations (ללא טקסט עברי)
+  // 3. fallback — Pollinations
   if (!buffer) {
     buffer = await generateWithPollinations(eventName, eventKey, group, cacheKey);
     contentType = "image/png";
   }
 
-  // 4. העלאה ל-Sanity assets
-  const ext = contentType.split("/")[1]?.split("+")[0] || "png";
+  // 4. overlay טקסט עברי (resvg + Heebo TTF)
+  try {
+    buffer = await addHebrewTextOverlay(buffer, eventName);
+    contentType = "image/jpeg";
+  } catch (e) {
+    console.warn("Hebrew text overlay failed, using raw image:", e);
+  }
+
+  // 5. העלאה ל-Sanity assets
+  const ext = contentType.split("/")[1]?.split("+")[0] || "jpg";
   const asset = await sanity.assets.upload("image", buffer, {
     filename: `event-${cacheKey}.${ext}`,
     contentType,
   });
 
-  // 5. שמירת cache
+  // 6. שמירת cache
   await sanity.create({
     _type: "eventImage",
     cacheKey,
