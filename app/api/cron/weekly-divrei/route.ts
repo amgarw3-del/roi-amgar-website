@@ -26,6 +26,7 @@ import { generateEventImage } from "@/lib/gemini-image";
 import { buildWhatsAppMessage, buildAlertMessage } from "@/lib/message-builder";
 import { getGreeting } from "@/lib/greeting";
 import { sendDivarToraMessage, sendWhatsAppText } from "@/lib/whatsapp-sender";
+import { sendGreenDivarTora, sendGreenText } from "@/lib/whatsapp-green-api";
 import { sendWeeklyDvarEmail, sendMissingDvarAlert } from "@/lib/send-email";
 
 export const dynamic = "force-dynamic";
@@ -104,11 +105,31 @@ export async function GET(req: NextRequest) {
       }
 
       if (channels.includes("whatsapp")) {
-        try {
-          const r = await sendWhatsAppText(alertText);
-          results.whatsapp = r.ok ? "sent" : `failed (${r.status}): ${r.body.slice(0, 200)}`;
-        } catch (e) {
-          results.whatsapp = `error: ${e instanceof Error ? e.message : String(e)}`;
+        // ניסיון 1: Green API (היציב)
+        let sent = false;
+        if (process.env.GREEN_API_ID_INSTANCE && process.env.GREEN_API_TOKEN) {
+          try {
+            const r = await sendGreenText(alertText);
+            if (r.ok) {
+              results.whatsapp = "sent (green-api)";
+              sent = true;
+            } else {
+              results.whatsapp_green = `failed (${r.status}): ${r.body.slice(0, 200)}`;
+            }
+          } catch (e) {
+            results.whatsapp_green = `error: ${e instanceof Error ? e.message : String(e)}`;
+          }
+        }
+        // ניסיון 2: CallMeBot (fallback)
+        if (!sent && process.env.CALLMEBOT_API_KEY) {
+          try {
+            const r = await sendWhatsAppText(alertText);
+            results.whatsapp = r.ok ? "sent (callmebot)" : `failed (${r.status}): ${r.body.slice(0, 200)}`;
+          } catch (e) {
+            results.whatsapp = `error: ${e instanceof Error ? e.message : String(e)}`;
+          }
+        } else if (!sent && !results.whatsapp) {
+          results.whatsapp = "skipped (no provider configured)";
         }
       }
 
@@ -192,18 +213,48 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // WhatsApp — best-effort (CallMeBot לא תמיד יציב)
+    // WhatsApp — ניסיון 1: Green API (יציב), ניסיון 2: CallMeBot (fallback)
     if (channels.includes("whatsapp")) {
-      try {
-        const sendResult = await sendDivarToraMessage(whatsappText, imageUrl);
-        const imgOk = sendResult.image?.ok;
-        const txtOk = sendResult.text?.ok;
-        results.whatsapp = {
-          image: imgOk ? "sent" : sendResult.image ? `failed (${sendResult.image.status})` : "skipped",
-          text: txtOk ? "sent" : sendResult.text ? `failed (${sendResult.text.status})` : "skipped",
-        };
-      } catch (e) {
-        results.whatsapp = `error: ${e instanceof Error ? e.message : String(e)}`;
+      let sent = false;
+
+      if (process.env.GREEN_API_ID_INSTANCE && process.env.GREEN_API_TOKEN) {
+        try {
+          const r = await sendGreenDivarTora(whatsappText, imageUrl);
+          const imgOk = r.image?.ok;
+          const txtOk = r.text?.ok;
+          if (imgOk || txtOk) {
+            results.whatsapp = {
+              provider: "green-api",
+              image: imgOk ? "sent" : r.image ? `failed (${r.image.status})` : "skipped",
+              text: txtOk ? "sent" : r.text ? `failed (${r.text.status})` : "skipped",
+            };
+            sent = true;
+          } else {
+            results.whatsapp_green = {
+              image: r.image ? `failed (${r.image.status}): ${r.image.body.slice(0, 150)}` : "skipped",
+              text: r.text ? `failed (${r.text.status}): ${r.text.body.slice(0, 150)}` : "skipped",
+            };
+          }
+        } catch (e) {
+          results.whatsapp_green = `error: ${e instanceof Error ? e.message : String(e)}`;
+        }
+      }
+
+      if (!sent && process.env.CALLMEBOT_API_KEY) {
+        try {
+          const r = await sendDivarToraMessage(whatsappText, imageUrl);
+          const imgOk = r.image?.ok;
+          const txtOk = r.text?.ok;
+          results.whatsapp = {
+            provider: "callmebot",
+            image: imgOk ? "sent" : r.image ? `failed (${r.image.status})` : "skipped",
+            text: txtOk ? "sent" : r.text ? `failed (${r.text.status})` : "skipped",
+          };
+        } catch (e) {
+          results.whatsapp = `error: ${e instanceof Error ? e.message : String(e)}`;
+        }
+      } else if (!sent && !results.whatsapp) {
+        results.whatsapp = "skipped (no provider configured)";
       }
     }
 
