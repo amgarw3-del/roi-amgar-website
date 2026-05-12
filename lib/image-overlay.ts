@@ -86,13 +86,15 @@ export async function addHebrewTextOverlay(
   </svg>`;
 
   // רנדור SVG ל-PNG דרך resvg (תומך TTF natively)
-  const resvg = new Resvg(svg, {
+  // fontBuffers נתמך ב-runtime אך לא בטיפוסי v2.6.2 — cast to any
+  const resvgOptions = {
     font: {
       fontBuffers: [fontBuffer],
       loadSystemFonts: false,
       defaultFontFamily: "Heebo",
     },
-  });
+  };
+  const resvg = new Resvg(svg, resvgOptions as any);
 
   const overlayPng = Buffer.from(resvg.render().asPng());
 
