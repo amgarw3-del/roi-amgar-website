@@ -30,9 +30,9 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   const result = await findBySlugOrShortId(sanity, id);
 
   if (!result?.slug) {
-    return NextResponse.redirect(new URL("/divrei-tora", req.url), 302);
+    return NextResponse.redirect(new URL("/dvar-tora", req.url), 302);
   }
 
-  const target = new URL(`/divrei-tora/${result.slug}`, req.url);
+  const target = new URL(`/dvar-tora/${result.slug}`, req.url);
   return NextResponse.redirect(target, 301);
 }

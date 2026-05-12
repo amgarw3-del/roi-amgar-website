@@ -71,47 +71,48 @@ const GROUP_FALLBACK: Record<EventGroup, ImagePromptConfig> = {
 
 /**
  * מחזיר prompt מלא ליצירת תמונת אירוע.
- * הטקסט העברי (כותרת + "הרב רועי אמגר") מוסף בנפרד דרך sharp overlay —
- * לכן ה-prompt לא מבקש מה-AI ליצור טקסט כלל.
+ * הטקסט העברי (שם הפרשה/מועד + "הרב רועי אמגר") מועבר ישירות ל-Gemini
+ * כדי שייצר אותם כחלק מהתמונה.
  */
 export function buildEventImagePrompt(params: {
   eventName: string;
   eventKey?: string;
   group: EventGroup;
 }): string {
-  const { eventKey, group } = params;
+  const { eventName, eventKey, group } = params;
 
   const config =
     (eventKey ? EVENT_MAP[eventKey] : undefined) ||
     GROUP_FALLBACK[group];
 
-  return `Square 1:1 sacred Jewish art image, 1024x1024 pixels.
+  return `Create a 1024x1024 square sacred Jewish art image.
 
-ABSOLUTE RULES — DO NOT BREAK:
+ABSOLUTE RULES:
 - NO people, NO human figures, NO faces, NO hands, NO body parts
-- NO text, NO letters, NO writing, NO numbers anywhere in the image
-- NO busy patterns, NO cluttered backgrounds, NO overcrowded details
+- Clean composition, not overcrowded
 
-Style: clean, elegant, minimalist sacred art with a single beautiful focal element.
-Rich atmospheric lighting, museum-quality digital painting.
+Required Hebrew text — must appear exactly as written:
+- TOP CENTER: Hebrew text "${eventName}" — large font (70-80pt), bold, gold color (#FFD700), centered
+- BOTTOM CENTER: Hebrew text "הרב רועי אמגר" — medium font (44pt), bold, gold color (#FFD700), centered
+- Both texts must be clearly readable on a dark semi-transparent background strip
+
+Visual style: clean, elegant, minimalist sacred art.
 Color palette: ${config.palette}.
 
 Composition:
-- Background: smooth dark gradient in ${config.palette} tones — calm and uncluttered
-- Center: ONE single main symbolic element, beautifully rendered with soft glowing light around it
-  Symbol: ${config.symbols.split(",")[0].trim()} — rendered with detail and reverence
-- A simple thin elegant gold border line framing the image
-- Plenty of breathing room — do NOT fill the image with many objects
+- Background: smooth dark gradient — calm and uncluttered
+- Center: ONE beautiful symbolic element — ${config.symbols.split(",")[0].trim()}
+  Soft glowing light, museum-quality rendering
+- Simple thin elegant gold border frame
+- Mood: sacred, timeless, reverent
 
-Mood: calm, sacred, timeless, reverent. Think: a single candle in darkness,
-a single shofar on velvet — NOT a crowded market stall.
-Output: square 1:1, 1024x1024.`;
+Output: square 1:1 image, 1024x1024 pixels.`;
 }
 
 /**
  * מחזיר event key לcache (slug + שנה עברית).
- * v3 = cache bust לאחר שינוי prompt + הוספת overlay טקסט עברי.
+ * v4 = cache bust לאחר חזרה לGemini עם טקסט עברי ב-prompt.
  */
 export function buildEventCacheKey(eventKey: string, hebrewYear: string): string {
-  return `${eventKey}-${hebrewYear}-v3`.replace(/[^a-z0-9-]/gi, "-");
+  return `${eventKey}-${hebrewYear}-v4`.replace(/[^a-z0-9-]/gi, "-");
 }

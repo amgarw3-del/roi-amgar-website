@@ -26,7 +26,7 @@ export default function SubscribeBanner() {
   };
 
   return (
-    <section style={{ background: "var(--color-primary)" }} className="py-8">
+    <section id="newsletter" style={{ background: "var(--color-primary)" }} className="py-8">
       <div className="container">
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* טקסט */}
