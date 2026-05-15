@@ -160,24 +160,23 @@ export function buildEventImagePrompt(params: {
 
   const mainElement = config.elementsHe.split(",")[0].trim();
 
-  return `תמונה ריבועית 1:1, צילומית, אלגנטית, יוקרתית ואיכותית מאוד עם אווירה רוחנית עמוקה.
+  return `NO PEOPLE. NO FACES. NO HUMANS. NO PORTRAITS. NO FIGURES. ONLY OBJECTS AND LANDSCAPES.
+NO TEXT. NO LETTERS. NO WRITING OF ANY KIND.
 
-חוקים מוחלטים — אסור בהחלט:
-- אנשים, פנים, ידיים, גוף אנושי מכל סוג
-- טקסט, אותיות, כתב, קליגרפיה, כיתובים
+Square 1:1 cinematic sacred Jewish art. Elegant, luxurious, deeply spiritual atmosphere.
 
-סצנת הרקע: ${config.themeHe}.
-אלמנטים ויזואליים: ${config.elementsHe}.
+Scene: ${config.themeHe}.
+Visual elements: ${config.elementsHe}.
 
-סגנון וקומפוזיציה:
-- קולנועי, סימטרי ומהודר
-- מוקד: ${mainElement}
-- תאורה: אור זהוב וחם הזוהר מתוך הסצנה
-- טקסטורות: אבן עתיקה, זהב, בד קטיפה
-- פלטת צבעים: ${config.paletteHe}
-- מסגרת: קו זהב דק ואלגנטי
+Style:
+- Cinematic, symmetrical, majestic
+- Focus: ${mainElement}
+- Lighting: warm golden light glowing through the scene
+- Textures: ancient stone, gold, velvet fabric
+- Color palette: ${config.paletteHe}
+- Thin elegant gold frame border
 
-פורמט: 1:1 ריבועי, 1024×1024 פיקסלים.`;
+Format: 1:1 square, 1024x1024 pixels.`;
 }
 
 /**
@@ -225,5 +224,5 @@ export function buildManualPrompt(params: {
  * מחזיר event key לcache.
  */
 export function buildEventCacheKey(eventKey: string, hebrewYear: string): string {
-  return `${eventKey}-${hebrewYear}-v8`.replace(/[^a-z0-9-]/gi, "-");
+  return `${eventKey}-${hebrewYear}-v9`.replace(/[^a-z0-9-]/gi, "-");
 }
