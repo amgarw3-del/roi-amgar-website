@@ -44,7 +44,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   // Sanity Studio uses its own React internally — prevent bundling conflicts
-  serverExternalPackages: ["sanity", "@sanity/ui", "@sanity/vision", "@resvg/resvg-js", "sharp"],
+  serverExternalPackages: ["sanity", "@sanity/ui", "@sanity/vision", "sharp", "opentype.js"],
 
   async headers() {
     return [

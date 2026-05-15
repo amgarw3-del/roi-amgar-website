@@ -2,30 +2,61 @@
  * lib/image-overlay.ts
  *
  * מוסיף overlay טקסט עברי על תמונה קיימת.
- * משתמש ב-@resvg/resvg-js (Rust/WASM) שתומך ב-@font-face + TTF natively —
- * בניגוד ל-librsvg של sharp שלא תומך בכך על Vercel.
+ * גישה: opentype.js → SVG paths (pure-JS, ללא native binaries) → sharp composite.
+ * יתרון: עובד על כל סביבה (Vercel, Edge, Windows, Linux) ללא תלות ב-librsvg/resvg.
  */
 
-import { Resvg } from "@resvg/resvg-js";
 import sharp from "sharp";
 import fs from "fs";
 import path from "path";
+// @ts-ignore — opentype.js has no TS declarations bundled
+import opentype from "opentype.js";
 
-let fontBufferCache: Buffer | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let fontCache: any | null = null;
 
-function getHeeboFontBuffer(): Buffer {
-  if (fontBufferCache) return fontBufferCache;
-  const p = path.join(process.cwd(), "public", "fonts", "Heebo-Bold.ttf");
-  if (!fs.existsSync(p)) throw new Error(`Font not found: ${p}`);
-  fontBufferCache = fs.readFileSync(p);
-  return fontBufferCache;
+function getFont() {
+  if (fontCache) return fontCache;
+  const fontPath = path.join(process.cwd(), "public", "fonts", "Heebo-Bold.ttf");
+  if (!fs.existsSync(fontPath)) throw new Error(`Font not found: ${fontPath}`);
+  const buf = fs.readFileSync(fontPath);
+  fontCache = opentype.parse(buf.buffer);
+  return fontCache;
+}
+
+/**
+ * ממיר מחרוזת RTL ל-SVG path string.
+ * opentype.js מרנדר LTR — אנחנו הופכים את הסדר לפני כן כדי לקבל RTL.
+ * cy = baseline (bottom of glyphs).
+ */
+function rtlToSvgPath(
+  font: any,
+  text: string,
+  cx: number,
+  cy: number,
+  fontSize: number,
+  color: string
+): string {
+  const reversed = [...text].reverse().join("");
+  const glyphs: any[] = font.stringToGlyphs(reversed);
+  const scale = fontSize / font.unitsPerEm;
+  const totalW = glyphs.reduce((s: number, g: any) => s + (g.advanceWidth || 0) * scale, 0);
+  let x = cx - totalW / 2;
+
+  const parts: string[] = glyphs.map((g: any) => {
+    const p = g.getPath(x, cy, fontSize);
+    x += (g.advanceWidth || 0) * scale;
+    return p.toSVG(2);
+  });
+
+  return `<g fill="${color}">${parts.join("")}</g>`;
 }
 
 /**
  * מוסיף overlay טקסט עברי (כותרת למעלה + subtitle למטה) על תמונה.
  *
  * @param imageBuffer - תמונת המקור (PNG/JPEG)
- * @param title       - שם הפרשה / מועד בעברית (למשל "פרשת במדבר")
+ * @param title       - שם הפרשה / מועד בעברית
  * @param subtitle    - טקסט תחתון, ברירת מחדל "הרב רועי אמגר"
  * @returns JPEG buffer עם הטקסט מוטמע
  */
@@ -34,73 +65,42 @@ export async function addHebrewTextOverlay(
   title: string,
   subtitle = "הרב רועי אמגר"
 ): Promise<Buffer> {
-  const fontBuffer = getHeeboFontBuffer();
+  const font = getFont();
 
-  // קרא ממדי התמונה בפועל
   const meta = await sharp(imageBuffer).metadata();
   const W = meta.width ?? 1024;
   const H = meta.height ?? 1024;
 
   const scale = Math.min(W, H) / 1024;
-  const titleSize  = Math.round(72 * scale);
-  const subSize    = Math.round(44 * scale);
-  const topBandH   = Math.round(200 * scale);
-  const botBandH   = Math.round(140 * scale);
-  const titleY     = Math.round(118 * scale);
-  const subY       = H - Math.round(52 * scale);
+  const titleSize  = Math.round(70 * scale);
+  const subSize    = Math.round(42 * scale);
+  const topBandH   = Math.round(170 * scale);
+  const botBandH   = Math.round(120 * scale);
+  const titleY     = Math.round(105 * scale);   // baseline
+  const subY       = H - Math.round(42 * scale); // baseline
 
-  // SVG עם גרדיאנטים ו-text — ללא @font-face (resvg טוען דרך fontFiles)
+  const titlePath = rtlToSvgPath(font, title,    W / 2, titleY, titleSize, "#FFD700");
+  const subPath   = rtlToSvgPath(font, subtitle, W / 2, subY,   subSize,   "#FFD700");
+
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
     <defs>
       <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"   stop-color="#000" stop-opacity="0.80"/>
+        <stop offset="0%"   stop-color="#000" stop-opacity="0.78"/>
         <stop offset="100%" stop-color="#000" stop-opacity="0"/>
       </linearGradient>
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%"   stop-color="#000" stop-opacity="0"/>
-        <stop offset="100%" stop-color="#000" stop-opacity="0.80"/>
+        <stop offset="100%" stop-color="#000" stop-opacity="0.78"/>
       </linearGradient>
     </defs>
-
-    <!-- פסי גרדיאנט -->
     <rect x="0" y="0"              width="${W}" height="${topBandH}" fill="url(#tg)"/>
     <rect x="0" y="${H - botBandH}" width="${W}" height="${botBandH}" fill="url(#bg)"/>
-
-    <!-- כותרת ראשית -->
-    <text
-      x="${W / 2}" y="${titleY}"
-      font-family="Heebo" font-weight="700" font-size="${titleSize}"
-      fill="#FFD700" text-anchor="middle"
-      direction="rtl" unicode-bidi="bidi-override"
-      dominant-baseline="middle"
-    >${title}</text>
-
-    <!-- כותרת משנית -->
-    <text
-      x="${W / 2}" y="${subY}"
-      font-family="Heebo" font-weight="700" font-size="${subSize}"
-      fill="#FFD700" text-anchor="middle"
-      direction="rtl" unicode-bidi="bidi-override"
-      dominant-baseline="middle"
-    >${subtitle}</text>
+    ${titlePath}
+    ${subPath}
   </svg>`;
 
-  // רנדור SVG ל-PNG דרך resvg (תומך TTF natively)
-  // fontBuffers נתמך ב-runtime אך לא בטיפוסי v2.6.2 — cast to any
-  const resvgOptions = {
-    font: {
-      fontBuffers: [fontBuffer],
-      loadSystemFonts: false,
-      defaultFontFamily: "Heebo",
-    },
-  };
-  const resvg = new Resvg(svg, resvgOptions as any);
-
-  const overlayPng = Buffer.from(resvg.render().asPng());
-
-  // הדבקת ה-overlay על תמונת המקור
   return sharp(imageBuffer)
-    .composite([{ input: overlayPng, top: 0, left: 0 }])
+    .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
     .jpeg({ quality: 92 })
     .toBuffer();
 }
