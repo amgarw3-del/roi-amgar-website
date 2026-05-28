@@ -1,7 +1,7 @@
 import { client } from "@/sanity/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { HelpCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -105,16 +105,6 @@ export default async function QnaPage({
       <section className="section">
         <div className="container">
           <div className="max-w-3xl mx-auto">
-            <div className="card p-6 md:p-8 mb-6">
-              <div className="flex items-start gap-3 mb-4">
-                <HelpCircle size={22} style={{ color: "var(--color-accent)" }} className="flex-shrink-0 mt-1" />
-                <div>
-                  <h2 className="text-sm font-bold text-gray-500 mb-1">השאלה</h2>
-                  <p className="text-base leading-relaxed whitespace-pre-wrap">{qna.question}</p>
-                </div>
-              </div>
-            </div>
-
             <div className="card p-6 md:p-8">
               <div className="flex items-start gap-3">
                 <CheckCircle2 size={22} style={{ color: "var(--color-primary)" }} className="flex-shrink-0 mt-1" />
