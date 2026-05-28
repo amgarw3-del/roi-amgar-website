@@ -2,6 +2,7 @@ import { client, queries } from "@/sanity/client";
 import Hero from "@/components/Hero";
 import VideoCard from "@/components/VideoCard";
 import BlogCard from "@/components/BlogCard";
+import DivarToraCard from "@/components/DivarToraCard";
 import QnACard from "@/components/QnACard";
 import VideoCarousel from "@/components/VideoCarousel";
 import SubscribeBanner from "@/components/SubscribeBanner";
@@ -61,7 +62,7 @@ function SectionHeading({ title }: { title: string }) {
 
 const DEFAULT_BLOCKS = [
   "hero", "donation", "subscribe", "categories", "videos", "shorts",
-  "lecturesStrip", "blog", "qna", "social",
+  "lecturesStrip", "divreiTora", "blog", "qna", "social",
 ];
 
 interface HomepageDoc {
@@ -74,9 +75,10 @@ interface HomepageDoc {
 }
 
 export default async function HomePage() {
-  const [videos, posts, qnas, ytLong, ytMedium, ytShorts, homepage] = await Promise.all([
+  const [videos, posts, divreiTora, qnas, ytLong, ytMedium, ytShorts, homepage] = await Promise.all([
     client.fetch(queries.latestVideos(6)).catch(() => []),
     client.fetch(queries.latestPosts(4)).catch(() => []),
+    client.fetch(queries.latestDivarTora(6)).catch(() => []),
     client.fetch(queries.latestQna(3)).catch(() => []),
     fetchYouTubeVideos(50, "long"),
     fetchYouTubeVideos(50, "medium"),
@@ -183,6 +185,27 @@ export default async function HomePage() {
       <section className="section" style={{ background: "var(--color-navy)" }}>
         <div className="container">
           <VideoCarousel videos={ytShortsAll} title="רואים תורה" subtitle="לשיעורים וחיזוקים בוידאו" isShorts dark />
+        </div>
+      </section>
+    ) : null,
+    divreiTora: divreiTora.length > 0 ? (
+      <section className="section" style={{ background: "var(--color-bg-cream)" }}>
+        <div className="container">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 style={{ fontFamily: serif, fontSize: "26px", fontWeight: 700, color: "var(--color-navy)" }}>
+                דברי תורה
+              </h2>
+              <div className="divider" />
+            </div>
+            <Link href="/dvar-tora" className="flex items-center gap-1 font-semibold text-sm" style={{ color: "var(--color-ochre)" }}>
+              לכל דברי התורה <ArrowLeft size={16} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {divreiTora.map((d: any) => <DivarToraCard key={d._id} {...d} />)}
+          </div>
         </div>
       </section>
     ) : null,
