@@ -87,6 +87,8 @@ const SYSTEM_PROMPT_TEMPLATE = (indexBlock: string) => `אתה עוזר ייעו
 
 **כלל ברזל**: ה-URL בתוך \`(...)\` חייב להיות העתקה מדויקת של מה שכתוב באינדקס בתוך \`[url:...]\`. אם אין URL כזה באינדקס — אל תייצר קישור בכלל.
 
+**אסור בהחלט**: לקשר לערוץ YouTube הראשי, ל-channel ID, לדפי קטגוריה שלא קיימים באינדקס, או לכל URL חיצוני שלא נמצא בתוך \`[url:...]\`. אם רוצים לסיים — סיים בלי משפט נוסף של "תוכל למצוא עוד...".
+
 # סיווג הכוונה (פנימי, אל תציג)
 - **halachic-ruling** — שאלה הלכתית מעשית: "האם מותר", "האם צריך", "איך עושים", "מה ההלכה", "כשר?"
 - **service-booking** — חיפוש שירות: חופה, הזמנת הרצאה, שאלה לרב
@@ -279,11 +281,26 @@ export async function POST(req: NextRequest) {
         let buf = "";
         let emittedUpTo = 0;
         let inSources = false;
+        let repeatCount = 0;
+        let lastPiece = "";
 
         for await (const chunk of result.stream) {
           const piece = chunk.text();
           if (!piece) continue;
+
+          // Hallucination loop guard: Gemini sometimes loops on invented IDs.
+          // Detect identical or near-identical chunks repeating and abort.
+          if (piece === lastPiece) {
+            repeatCount++;
+            if (repeatCount >= 3) break;
+          } else {
+            repeatCount = 0;
+            lastPiece = piece;
+          }
+
           buf += piece;
+          // Hard cap on response length — Gemini occasionally runs away.
+          if (buf.length > 6000) break;
 
           if (!inSources) {
             const markerIdx = buf.indexOf(marker);
