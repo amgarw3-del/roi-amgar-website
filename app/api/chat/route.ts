@@ -302,12 +302,27 @@ export async function POST(req: NextRequest) {
 
           buf += piece;
 
-          // Intra-buffer repetition: if the last 300 chars contain a 4-12 char
-          // pattern repeating 8+ times (e.g. "4z4z4z4z..." or "e0-B6-e0-B6-..."),
-          // it's a runaway invented-ID loop. Abort.
-          if (buf.length > 400 && buf.length % 200 < 50) {
-            const tail = buf.slice(-300);
-            if (/(.{2,12})\1{7,}/.test(tail)) break;
+          // Intra-buffer repetition: detect runaway invented-ID loops
+          // (e.g. "j3j3j3..." or "4z4z4z..." or "-e0-B6-e0-B6-...").
+          // Roll back buf to last clean state and stop streaming.
+          if (buf.length > 400) {
+            const tail = buf.slice(-200);
+            if (/(.{2,12})\1{5,}/.test(tail)) {
+              // Try to find a good cut point — last newline before the loop, or
+              // the start of the runaway URL. Fall back to last emitted offset.
+              const youtubeChannelIdx = buf.indexOf("youtube.com/channel/");
+              if (youtubeChannelIdx !== -1) {
+                // Find the start of the markdown link containing this URL
+                const linkStart = buf.lastIndexOf("[", youtubeChannelIdx);
+                const sentenceStart = linkStart !== -1
+                  ? Math.max(buf.lastIndexOf(".", linkStart), buf.lastIndexOf("\n", linkStart))
+                  : -1;
+                buf = sentenceStart !== -1 ? buf.slice(0, sentenceStart + 1) : buf.slice(0, emittedUpTo);
+              } else {
+                buf = buf.slice(0, emittedUpTo);
+              }
+              break;
+            }
           }
 
           // Hard cap on response length — Gemini occasionally runs away.
