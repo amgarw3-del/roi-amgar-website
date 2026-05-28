@@ -51,12 +51,29 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+
   return (
     <html
       lang="he"
       dir="rtl"
       className={`${heebo.variable} ${frankRuhl.variable} h-full`}
     >
+      <head>
+        {gaId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`,
+              }}
+            />
+          </>
+        )}
+      </head>
       <body className="font-heebo min-h-full flex flex-col">
         <SiteShell>{children}</SiteShell>
         <Analytics />

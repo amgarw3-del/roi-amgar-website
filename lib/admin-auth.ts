@@ -2,7 +2,12 @@ export const SESSION_COOKIE_NAME = "admin_session";
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 async function makeHmac(message: string): Promise<string> {
-  const secret = process.env.ADMIN_SESSION_SECRET ?? "fallback-dev-secret";
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) {
+    throw new Error(
+      "ADMIN_SESSION_SECRET is not configured. Set it in environment variables."
+    );
+  }
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",

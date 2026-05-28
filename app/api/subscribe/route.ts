@@ -37,13 +37,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "גוף בקשה לא תקין" }, { status: 400 });
   }
 
-  const name = typeof parsed.name === "string" ? parsed.name.trim() : "";
+  const rawName = typeof parsed.name === "string" ? parsed.name.trim() : "";
   const email = typeof parsed.email === "string" ? parsed.email.trim() : "";
   const phone = typeof parsed.phone === "string" ? parsed.phone.trim() : "";
 
-  if (!name || name.length > 100) {
-    return NextResponse.json({ error: "שם חובה (עד 100 תווים)" }, { status: 400 });
+  if (rawName.length > 100) {
+    return NextResponse.json({ error: "שם ארוך מדי (עד 100 תווים)" }, { status: 400 });
   }
+  const name = rawName || "מנוי";
   if (!email || email.length > 200 || !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "כתובת אימייל לא תקינה" }, { status: 400 });
   }

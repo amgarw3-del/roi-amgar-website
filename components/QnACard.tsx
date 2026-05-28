@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { HelpCircle, CheckCircle2, ChevronDown, Share2, Link as LinkIcon, Check } from "lucide-react";
+import DivarToraContent from "@/components/DivarToraContent";
+
+function stripMarkdown(s: string): string {
+  return s.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1").replace(/^>\s?/gm, "");
+}
 
 interface QnACardProps {
   _id: string;
@@ -24,8 +29,9 @@ export default function QnACard({
 }: QnACardProps) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
-  const isLong = answer.length > 200;
-  const shortAnswer = isLong ? answer.slice(0, 200) + "..." : answer;
+  const plainAnswer = stripMarkdown(answer);
+  const isLong = plainAnswer.length > 200;
+  const shortAnswer = isLong ? plainAnswer.slice(0, 200) + "..." : plainAnswer;
 
   const pageHref = `/shaal/${slug?.current ?? _id}`;
   const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.haravroiamgar.com";
@@ -76,9 +82,15 @@ export default function QnACard({
           <p className="text-sm font-semibold mb-1" style={{ color: "var(--color-primary)" }}>
             תשובת הרב:
           </p>
-          <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
-            {expanded ? answer : shortAnswer}
-          </p>
+          {expanded ? (
+            <div className="text-gray-600 text-sm leading-relaxed">
+              <DivarToraContent content={answer} />
+            </div>
+          ) : (
+            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+              {shortAnswer}
+            </p>
+          )}
           {isLong && (
             <button
               type="button"

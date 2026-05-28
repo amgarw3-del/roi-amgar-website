@@ -54,7 +54,7 @@ export default function Hero({ title, subtitle, imageUrl, ctaLabel, ctaHref }: H
             <div style={{ position: "relative" }}>
               <div className="hero-image-mobile" style={{ position: "relative", aspectRatio: "4/5", borderRadius: "24px", overflow: "hidden", maxWidth: "420px", margin: "0 auto" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl || "/rabbi.jpg"} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
+                <img src={imageUrl || "/rabbi.jpg"} alt="הרב רועי אמגר" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
               </div>
             </div>
           </div>

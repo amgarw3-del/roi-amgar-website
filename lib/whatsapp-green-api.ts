@@ -90,8 +90,13 @@ export async function sendGreenImage(imageUrl: string, caption?: string): Promis
   return { ok: res.ok && !!idMessage, status: res.status, body, idMessage };
 }
 
+// גבול תווים ל-caption של WhatsApp — מעל זה Green API מחזיר 400
+const WHATSAPP_CAPTION_LIMIT = 1000;
+
 /**
- * שליחה מלאה: תמונה + caption (או טקסט בלבד אם אין תמונה).
+ * שליחה מלאה: תמונה + טקסט מלא.
+ * אם הטקסט ארוך מ-1000 תווים — שולחים תמונה עם caption קצר,
+ * ואחריה הטקסט המלא כהודעה נפרדת.
  * אם תמונה נכשלה — fallback לטקסט בלבד.
  */
 export async function sendGreenDivarTora(
@@ -99,13 +104,27 @@ export async function sendGreenDivarTora(
   imageUrl?: string
 ): Promise<{ image: GreenSendResult | null; text: GreenSendResult | null }> {
   if (imageUrl) {
-    const img = await sendGreenImage(imageUrl, text).catch((e) => ({
+    const needsSplit = text.length > WHATSAPP_CAPTION_LIMIT;
+
+    // caption: אם הטקסט ארוך — שולחים תמונה ריקה (בלי caption), ואז טקסט נפרד
+    const caption = needsSplit ? "" : text;
+
+    const img = await sendGreenImage(imageUrl, caption).catch((e) => ({
       ok: false,
       status: 0,
       body: String(e),
     }));
-    if (img.ok) return { image: img, text: null };
-    // fallback: שולחים טקסט נפרד
+
+    if (img.ok) {
+      if (needsSplit) {
+        // תמונה הצליחה — שולחים את הטקסט המלא כהודעה נפרדת
+        const txt = await sendGreenText(text);
+        return { image: img, text: txt };
+      }
+      return { image: img, text: null };
+    }
+
+    // תמונה נכשלה — fallback: שולחים טקסט בלבד
     const txt = await sendGreenText(text);
     return { image: img, text: txt };
   }

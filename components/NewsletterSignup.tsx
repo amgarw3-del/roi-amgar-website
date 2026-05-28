@@ -3,18 +3,43 @@
 import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function NewsletterSignup() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email) return;
+    if (loading) return;
+    setError(null);
+    const trimmed = email.trim();
+    if (!EMAIL_RE.test(trimmed)) {
+      setError("כתובת מייל לא תקינה");
+      return;
+    }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSubmitted(true);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      const data: { ok?: boolean; error?: string } = await res
+        .json()
+        .catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? "אירעה שגיאה, נסה שוב");
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setError("בעיית רשת — נסה שוב מאוחר יותר");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -122,11 +147,25 @@ export default function NewsletterSignup() {
                   cursor: loading ? "wait" : "pointer",
                   whiteSpace: "nowrap",
                   transition: "background 0.2s",
+                  opacity: loading ? 0.7 : 1,
                 }}
               >
                 {loading ? "..." : "הרשמה"}
               </button>
             </form>
+          )}
+          {error && !submitted && (
+            <div
+              role="alert"
+              style={{
+                marginTop: "12px",
+                color: "#b91c1c",
+                fontSize: "14px",
+                textAlign: "center",
+              }}
+            >
+              {error}
+            </div>
           )}
         </div>
       </div>

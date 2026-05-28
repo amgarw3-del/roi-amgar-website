@@ -41,9 +41,24 @@ export const qnaSchema = defineType({
     }),
     defineField({
       name: "category",
-      title: "קטגוריה",
+      title: "נושא ראשי",
       type: "reference",
       to: [{ type: "category" }],
+    }),
+    defineField({
+      name: "extraCategories",
+      title: "נושאים נוספים",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "category" }] }],
+      validation: (rule) => rule.max(2),
+      description: "עד 2 נושאים נוספים (סך הכל עד 3)",
+    }),
+    defineField({
+      name: "subTopics",
+      title: "תתי-נושאים",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "subTopic" }] }],
+      description: "מועד / פרשה / צום / אירוע לאומי — אפשר לבחור כמה",
     }),
     defineField({
       name: "searchKeywords",

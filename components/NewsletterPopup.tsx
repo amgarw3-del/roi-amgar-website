@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { X, CheckCircle2 } from "lucide-react";
 
-const STORAGE_KEY = "newsletter_popup_shown";
-const DELAY_MS = 2 * 60 * 1000; // 2 דקות
+const SUBSCRIBED_KEY = "newsletter_subscribed";
+const DISMISSED_KEY  = "newsletter_popup_dismissed";
+const COOLDOWN_MS    = 7 * 24 * 60 * 60 * 1000; // 7 ימים
+const DELAY_MS       = 2 * 60 * 1000; // 2 דקות
 
 export default function NewsletterPopup() {
   const [visible, setVisible] = useState(false);
@@ -13,7 +15,9 @@ export default function NewsletterPopup() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem(STORAGE_KEY)) return;
+    if (localStorage.getItem(SUBSCRIBED_KEY)) return;
+    const dismissed = localStorage.getItem(DISMISSED_KEY);
+    if (dismissed && Date.now() - Number(dismissed) < COOLDOWN_MS) return;
 
     const timer = setTimeout(() => setVisible(true), DELAY_MS);
     return () => clearTimeout(timer);
@@ -21,7 +25,7 @@ export default function NewsletterPopup() {
 
   function close() {
     setVisible(false);
-    sessionStorage.setItem(STORAGE_KEY, "1");
+    localStorage.setItem(DISMISSED_KEY, String(Date.now()));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -39,7 +43,9 @@ export default function NewsletterPopup() {
       });
       if (res.ok) {
         setStatus("success");
-        setTimeout(close, 2500);
+        localStorage.setItem(SUBSCRIBED_KEY, "1");
+        localStorage.removeItem(DISMISSED_KEY);
+        setTimeout(() => setVisible(false), 2500);
       } else {
         setStatus("error");
       }

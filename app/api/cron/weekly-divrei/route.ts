@@ -32,8 +32,10 @@ import { sendWeeklyDvarEmail, sendMissingDvarAlert } from "@/lib/send-email";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const WINDOW_MIN = 29;
-const WINDOW_MAX = 31;
+// חלון שליחה: ~48 שעות לפני האירוע, רחב מספיק לפיגורי GitHub Actions (3-4h בין ריצות)
+// lastSentAt מבטיח שליחה חד-פעמית בלבד
+const WINDOW_MIN = 42;
+const WINDOW_MAX = 54;
 
 type Channel = "email" | "whatsapp";
 

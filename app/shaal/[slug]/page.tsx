@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
+import DivarToraContent from "@/components/DivarToraContent";
+import ShareButtons from "@/components/ShareButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -110,8 +112,19 @@ export default async function QnaPage({
                 <CheckCircle2 size={22} style={{ color: "var(--color-primary)" }} className="flex-shrink-0 mt-1" />
                 <div>
                   <h2 className="text-sm font-bold text-gray-500 mb-1">תשובת הרב</h2>
-                  <div className="text-base leading-relaxed whitespace-pre-wrap">{qna.answer}</div>
+                  <div className="text-base leading-relaxed">
+                    <DivarToraContent content={qna.answer} />
+                  </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-5 border-t border-gray-100">
+              <p className="text-sm font-semibold mb-3" style={{ color: "var(--color-primary)" }}>
+                שתף את התשובה
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <ShareButtons title={qna.question} path={`/shaal/${encodeURIComponent(decodedSlug)}`} />
               </div>
             </div>
 

@@ -48,7 +48,10 @@ export const queries = {
 
   // לפי קטגוריה
   byCategory: (categorySlug: string, type: string, limit = 12) =>
-    `*[_type == "${type}" && category->slug.current == "${categorySlug}" && status == "published" && (hidden != true || _type != "video")] | order(publishedAt desc) [0...${limit}] {
+    `*[_type == "${type}" && category->slug.current == "${categorySlug}"
+      && (_type != "video" || (status == "published" && hidden != true))
+      && (_type != "qna" || isPublic == true)
+    ] | order(publishedAt desc) [0...${limit}] {
       _id, title, slug, summary, publishedAt, youtubeId, level
     }`,
 

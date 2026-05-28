@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpen, Download } from "lucide-react";
 import DivarToraContent from "@/components/DivarToraContent";
 import DvarTracker from "@/components/DvarTracker";
+import DvarShareButtons from "@/components/DvarShareButtons";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -64,7 +65,7 @@ export default async function DivarToraSlugPage({ params }: Props) {
         {date && <p className="text-sm text-gray-400">{item.hebrewDate ?? date}</p>}
       </div>
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <a
           href={`/api/download-dvar/${item.slug.current}`}
           download
@@ -74,6 +75,7 @@ export default async function DivarToraSlugPage({ params }: Props) {
           <Download size={15} />
           להורדה כ-Word
         </a>
+        <DvarShareButtons title={item.title} slug={item.slug.current} />
       </div>
 
       <div className="divider" />
@@ -91,8 +93,17 @@ export default async function DivarToraSlugPage({ params }: Props) {
       {/* תוכן */}
       <DivarToraContent content={item.content ?? ""} />
 
-      {/* שיתוף */}
-      <div className="mt-10 pt-6 border-t border-gray-100 flex items-center gap-3">
+      {/* כפתורי שיתוף בתחתית */}
+      <div className="mt-10 pt-6 border-t border-gray-100">
+        <p className="text-sm font-semibold mb-3" style={{ color: "var(--color-primary)" }}>
+          אהבת? שתף עם אחרים
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <DvarShareButtons title={item.title} slug={item.slug.current} />
+        </div>
+      </div>
+
+      <div className="mt-8 pt-6 border-t border-gray-100 flex items-center gap-3">
         <BookOpen size={18} style={{ color: "var(--color-accent)" }} />
         <p className="text-sm text-gray-500">
           הרב רועי אמגר —{" "}

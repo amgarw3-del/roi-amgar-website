@@ -43,6 +43,7 @@ export default function SourceCard({ source }: { source: ChatSource }) {
     const cta = SERVICE_CTA[source.url] ?? { emoji: "→", label: "עבור לדף" };
     return (
       <Link
+        id={`source-${source.id}`}
         href={source.url}
         className="block rounded-xl p-4 transition-all group"
         style={{
@@ -156,6 +157,7 @@ export default function SourceCard({ source }: { source: ChatSource }) {
   if (source.external) {
     return (
       <a
+        id={`source-${source.id}`}
         href={source.url}
         target="_blank"
         rel="noopener noreferrer"
@@ -170,7 +172,14 @@ export default function SourceCard({ source }: { source: ChatSource }) {
   }
 
   return (
-    <Link href={source.url} className={cardClass} style={cardStyle} onMouseEnter={onEnter} onMouseLeave={onLeave}>
+    <Link
+      id={`source-${source.id}`}
+      href={source.url}
+      className={cardClass}
+      style={cardStyle}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+    >
       {content}
     </Link>
   );

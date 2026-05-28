@@ -22,16 +22,28 @@ export interface QnaItem {
   isPublic: boolean;
   publishedAt?: string;
   _createdAt: string;
-  category?: { hebrewName: string };
+  category?: { _id: string; hebrewName: string };
+  extraCategories?: { _id: string; hebrewName: string }[];
+  subTopics?: { _id: string; hebrewName: string }[];
 }
 
 export default async function AdminQnaPage() {
-  const all = await sanity.fetch<QnaItem[]>(
-    `*[_type == "qna"] | order(_createdAt desc) [0...100] {
-      _id, question, answer, askerName, questionType, isPublic, publishedAt, _createdAt,
-      category->{hebrewName}
-    }`
-  );
+  const [all, categories, subTopics] = await Promise.all([
+    sanity.fetch<QnaItem[]>(
+      `*[_type == "qna"] | order(_createdAt desc) [0...100] {
+        _id, question, answer, askerName, questionType, isPublic, publishedAt, _createdAt,
+        category->{_id, hebrewName},
+        extraCategories[]->{_id, hebrewName},
+        subTopics[]->{_id, hebrewName}
+      }`
+    ),
+    sanity.fetch<{ _id: string; hebrewName: string; slug: { current: string } }[]>(
+      `*[_type == "category"] | order(name asc) { _id, hebrewName, slug }`
+    ),
+    sanity.fetch<{ _id: string; hebrewName: string; slug: { current: string }; group?: string }[]>(
+      `*[_type == "subTopic"] | order(group asc, order asc) { _id, hebrewName, slug, group }`
+    ),
+  ]);
 
   const unanswered = all.filter((q) => !q.answer);
   const answered = all.filter((q) => q.answer && !q.isPublic);
@@ -56,7 +68,13 @@ export default async function AdminQnaPage() {
         </div>
       </div>
 
-      <QnaList unanswered={unanswered} answered={answered} published={published} />
+      <QnaList
+        unanswered={unanswered}
+        answered={answered}
+        published={published}
+        categories={categories}
+        subTopics={subTopics}
+      />
     </div>
   );
 }
