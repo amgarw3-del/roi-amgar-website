@@ -87,7 +87,9 @@ const SYSTEM_PROMPT_TEMPLATE = (indexBlock: string) => `אתה עוזר ייעו
 
 **כלל ברזל**: ה-URL בתוך \`(...)\` חייב להיות העתקה מדויקת של מה שכתוב באינדקס בתוך \`[url:...]\`. אם אין URL כזה באינדקס — אל תייצר קישור בכלל.
 
-**אסור בהחלט**: לקשר לערוץ YouTube הראשי, ל-channel ID, לדפי קטגוריה שלא קיימים באינדקס, או לכל URL חיצוני שלא נמצא בתוך \`[url:...]\`. אם רוצים לסיים — סיים בלי משפט נוסף של "תוכל למצוא עוד...".
+**אסור בהחלט**: לקשר לערוץ YouTube הראשי, ל-channel ID, לדפי קטגוריה שלא קיימים באינדקס, או לכל URL חיצוני שלא נמצא בתוך \`[url:...]\`.
+
+**כיצד לסיים את התשובה**: סיים מיד לאחר הפריט האחרון ברשימה. אל תוסיף משפט חתימה כמו "אפשר למצוא עוד...", "תוכל לעיין ב...", "ראה גם בקטגוריית...", או הפניה לערוץ YouTube. רשימת המקורות בכרטיסיות שמתחת כבר נותנת למשתמש את הקישורים הכלליים.
 
 # סיווג הכוונה (פנימי, אל תציג)
 - **halachic-ruling** — שאלה הלכתית מעשית: "האם מותר", "האם צריך", "איך עושים", "מה ההלכה", "כשר?"
@@ -299,8 +301,17 @@ export async function POST(req: NextRequest) {
           }
 
           buf += piece;
+
+          // Intra-buffer repetition: if the last 300 chars contain a 4-12 char
+          // pattern repeating 8+ times (e.g. "4z4z4z4z..." or "e0-B6-e0-B6-..."),
+          // it's a runaway invented-ID loop. Abort.
+          if (buf.length > 400 && buf.length % 200 < 50) {
+            const tail = buf.slice(-300);
+            if (/(.{2,12})\1{7,}/.test(tail)) break;
+          }
+
           // Hard cap on response length — Gemini occasionally runs away.
-          if (buf.length > 6000) break;
+          if (buf.length > 5000) break;
 
           if (!inSources) {
             const markerIdx = buf.indexOf(marker);
