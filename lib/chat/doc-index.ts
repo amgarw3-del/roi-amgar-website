@@ -220,7 +220,7 @@ export function invalidateDocIndex(): void {
   cache = null;
 }
 
-/** Build the compact textual block fed to the LLM. ~150-280 chars per doc. */
+/** Build the compact textual block fed to the LLM. Includes URL so the model can build inline markdown links. */
 export function buildIndexBlock(docs: IndexedDoc[]): string {
   return docs
     .map((d) => {
@@ -228,9 +228,9 @@ export function buildIndexBlock(docs: IndexedDoc[]): string {
       if (d.isHalachicRuling) meta.push("[הלכה למעשה ✓]");
       if (d.category) meta.push(`קטגוריה: ${d.category}`);
       if (d.topics.length) meta.push(`נושאים: ${d.topics.join(", ")}`);
-      const head = `[slug:${d.slug}] (${meta.join(" | ")}) ${d.title}`;
+      const head = `[slug:${d.slug}] [url:${d.url}] (${meta.join(" | ")}) ${d.title}`;
       if (d.preview && d.preview !== d.title) {
-        return `${head}\n  ${d.preview.slice(0, 240)}`;
+        return `${head}\n  ${d.preview.slice(0, 380)}`;
       }
       return head;
     })
