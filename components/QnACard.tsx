@@ -28,11 +28,12 @@ export default function QnACard({
   const shortAnswer = isLong ? answer.slice(0, 200) + "..." : answer;
 
   const pageHref = `/shaal/${slug?.current ?? _id}`;
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.haravroiamgar.com";
+  const shareUrl = `${SITE_URL}${pageHref}`;
 
   const handleCopyLink = async () => {
     try {
-      const url = typeof window !== "undefined" ? new URL(pageHref, window.location.origin).toString() : pageHref;
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -40,7 +41,6 @@ export default function QnACard({
     }
   };
 
-  const shareUrl = typeof window !== "undefined" ? new URL(pageHref, window.location.origin).toString() : "";
   const whatsappHref = `https://wa.me/?text=${encodeURIComponent(`${question}\n\n${shareUrl}`)}`;
 
   return (

@@ -96,7 +96,7 @@ export default async function QnaPage({
               <span className="text-white/70 text-xs">{qna.hebrewDate}</span>
             )}
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white leading-snug">
+          <h1 className="text-2xl md:text-3xl font-bold leading-snug" style={{ color: "#ffffff" }}>
             {qna.question}
           </h1>
         </div>
