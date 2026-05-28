@@ -307,7 +307,21 @@ export async function POST(req: NextRequest) {
           send({ type: "delta", text: buf.slice(emittedUpTo) });
         }
 
-        const { sources } = parseSourcesBlock(buf, docs);
+        const { body, sources } = parseSourcesBlock(buf, docs);
+
+        // Safety net: if the model dropped the inline-link rule, inject a
+        // "קישורים מהירים" mini-list so the user always gets clickable links
+        // in the message body — not only as cards below.
+        const markdownLinkCount = (body.match(/\]\(\/|\]\(https?:\/\//g) ?? []).length;
+        if (markdownLinkCount === 0 && sources.length > 0) {
+          const fallback = "\n\n**קישורים מהירים:**\n" +
+            sources
+              .slice(0, 5)
+              .map((s) => `- [${s.title}](${s.url})`)
+              .join("\n");
+          send({ type: "delta", text: fallback });
+        }
+
         send({ type: "sources", sources });
         send({ type: "done" });
       } catch (err) {
