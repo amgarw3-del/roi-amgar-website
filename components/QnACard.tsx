@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { HelpCircle, CheckCircle2, ChevronDown } from "lucide-react";
+import { HelpCircle, CheckCircle2, ChevronDown, Share2, Link as LinkIcon, Check } from "lucide-react";
 
 interface QnACardProps {
   _id: string;
@@ -14,14 +15,33 @@ interface QnACardProps {
 }
 
 export default function QnACard({
+  _id,
   question,
   answer,
+  slug,
   category,
   answerType,
 }: QnACardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
   const isLong = answer.length > 200;
   const shortAnswer = isLong ? answer.slice(0, 200) + "..." : answer;
+
+  const pageHref = `/shaal/${slug?.current ?? _id}`;
+
+  const handleCopyLink = async () => {
+    try {
+      const url = typeof window !== "undefined" ? new URL(pageHref, window.location.origin).toString() : pageHref;
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
+
+  const shareUrl = typeof window !== "undefined" ? new URL(pageHref, window.location.origin).toString() : "";
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(`${question}\n\n${shareUrl}`)}`;
 
   return (
     <div className="card block p-5">
@@ -80,11 +100,39 @@ export default function QnACard({
         </div>
       </div>
 
-      {/* Attribution */}
-      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-        <p className="text-xs text-gray-400">
-          נכתב ע"י הרב רועי אמגר
-        </p>
+      {/* Actions: open page + share */}
+      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
+        <Link
+          href={pageHref}
+          className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border hover:bg-gray-50"
+          style={{ color: "var(--color-primary)", borderColor: "var(--color-primary)" }}
+        >
+          פתח בעמוד נפרד ←
+        </Link>
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+          aria-label="העתק קישור לתשובה"
+        >
+          {copied ? <Check size={14} /> : <LinkIcon size={14} />}
+          {copied ? "הועתק" : "העתק קישור"}
+        </button>
+        <a
+          href={whatsappHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg text-white"
+          style={{ background: "#25d366" }}
+          aria-label="שתף בוואטסאפ"
+        >
+          <Share2 size={14} />
+          שתף
+        </a>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-xs text-gray-400">נכתב ע"י הרב רועי אמגר</p>
         {answerType === "for-learning" && (
           <p className="text-xs text-gray-400">לצורך לימוד בלבד</p>
         )}

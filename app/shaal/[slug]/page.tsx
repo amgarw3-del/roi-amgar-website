@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-const QNA_BY_SLUG = `*[_type == "qna" && slug.current == $slug && isPublic == true][0]{
+const QNA_BY_SLUG = `*[_type == "qna" && (slug.current == $slug || _id == $slug) && isPublic == true][0]{
   _id, question, answer, questionType, answerType,
   category->{hebrewName, slug},
   publishedAt, hebrewDate
