@@ -1,5 +1,7 @@
-import Link from "next/link";
-import { HelpCircle, CheckCircle2 } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { HelpCircle, CheckCircle2, ChevronDown } from "lucide-react";
 
 interface QnACardProps {
   _id: string;
@@ -14,15 +16,15 @@ interface QnACardProps {
 export default function QnACard({
   question,
   answer,
-  slug,
   category,
   answerType,
 }: QnACardProps) {
-  const shortAnswer = answer.length > 200 ? answer.slice(0, 200) + "..." : answer;
-  const href = slug ? `/shaal/${slug.current}` : "#";
+  const [expanded, setExpanded] = useState(false);
+  const isLong = answer.length > 200;
+  const shortAnswer = isLong ? answer.slice(0, 200) + "..." : answer;
 
   return (
-    <Link href={href} className="card block group p-5">
+    <div className="card block p-5">
       {/* Question */}
       <div className="flex gap-3 mb-4">
         <HelpCircle
@@ -43,25 +45,37 @@ export default function QnACard({
         </div>
       </div>
 
-      {/* Answer preview */}
+      {/* Answer */}
       <div className="flex gap-3">
         <CheckCircle2
           size={20}
           className="flex-shrink-0 mt-0.5"
           style={{ color: "var(--color-primary)" }}
         />
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold mb-1" style={{ color: "var(--color-primary)" }}>
             תשובת הרב:
           </p>
-          <p className="text-gray-600 text-sm leading-relaxed">{shortAnswer}</p>
-          {answer.length > 200 && (
-            <span
-              className="text-sm font-semibold mt-2 inline-block"
+          <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+            {expanded ? answer : shortAnswer}
+          </p>
+          {isLong && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-2 inline-flex items-center gap-1 text-sm font-semibold hover:underline"
               style={{ color: "var(--color-primary)" }}
+              aria-expanded={expanded}
             >
-              קרא תשובה מלאה ←
-            </span>
+              {expanded ? "הסתר" : "קרא תשובה מלאה"}
+              <ChevronDown
+                size={16}
+                style={{
+                  transition: "transform 0.2s",
+                  transform: expanded ? "rotate(180deg)" : "rotate(0)",
+                }}
+              />
+            </button>
           )}
         </div>
       </div>
@@ -75,6 +89,6 @@ export default function QnACard({
           <p className="text-xs text-gray-400">לצורך לימוד בלבד</p>
         )}
       </div>
-    </Link>
+    </div>
   );
 }
