@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { BookOpen, MessageCircleQuestion, Users } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -23,6 +24,13 @@ const structuredData = {
   knowsAbout: ["הלכה", "אמונה", "זוגיות", "פרשת שבוע", "מחשבת ישראל"],
   inLanguage: "he",
   addressCountry: "IL",
+  affiliation: {
+    "@type": "NGO",
+    name: 'עמותת "סיגלהיות" ע"ש סיגל אמגר ע"ה',
+    alternateName: "סיגלהיות - מרכז לזוגיות, חינוך, חסד ותורה",
+    url: "https://www.guidestar.org.il/organization/580752954",
+    identifier: "580752954",
+  },
 };
 
 export default function AboutPage() {
@@ -71,6 +79,45 @@ export default function AboutPage() {
             <p>
               [ניתן לכתוב כמה פסקאות אישיות שמדברות ישירות לקהל שלך — גם קהל צעיר וגם מבוגר.]
             </p>
+          </div>
+        </section>
+
+        {/* העמותה */}
+        <section className="mb-12 card p-6">
+          <h2 className="text-xl font-bold mb-4" style={{ color: "var(--color-primary)" }}>
+            הפעילות התורנית מתקיימת תחת עמותת &quot;סיגלהיות&quot;
+          </h2>
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="w-32 h-32 flex-shrink-0 relative">
+              <Image
+                src="/images/sigaliyot-logo.png"
+                alt='לוגו עמותת סיגלהיות ע"ש סיגל אמגר ע"ה'
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div className="text-gray-700 text-sm space-y-2">
+              <p>
+                כל שיעורי התורה, ההרצאות והפעילות החינוכית של הרב רועי אמגר מתקיימים
+                ופועלים תחת עמותת <strong>&quot;סיגלהיות&quot; ע&quot;ש סיגל אמגר ע&quot;ה</strong> —
+                מרכז לזוגיות, חינוך, חסד ותורה, עמותה רשומה כדין ברשם העמותות.
+              </p>
+              <p>
+                מספר עמותה: <strong>580752954</strong>
+              </p>
+              <p>
+                ניתן לצפות בפרטי הרישום הציבוריים של העמותה באתר רשם העמותות (גיידסטאר):{" "}
+                <a
+                  href="https://www.guidestar.org.il/organization/580752954"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                  style={{ color: "var(--color-primary)" }}
+                >
+                  עמוד העמותה בגיידסטאר
+                </a>
+              </p>
+            </div>
           </div>
         </section>
 
