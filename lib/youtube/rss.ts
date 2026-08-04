@@ -50,6 +50,51 @@ export async function fetchRSSVideos(): Promise<YouTubeVideo[]> {
   return videos;
 }
 
+/** וידאו RSS כולל תיאור (media:description) — לאוטומציית התראת סרטון חדש */
+export interface YouTubeVideoWithDesc extends YouTubeVideo {
+  description: string;
+}
+
+/**
+ * כמו fetchRSSVideos אבל מחלץ גם את media:description מכל entry.
+ * משמש את קרון youtube-notify כדי לבנות משפט קצר מהתיאור.
+ */
+export async function fetchLatestUploadsWithDesc(): Promise<YouTubeVideoWithDesc[]> {
+  const res = await fetch(RSS_URL, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (compatible; RoiAmgarWebsite/1.0; +https://harav-roi-amgar.com)",
+    },
+    next: { revalidate: 0 },
+  });
+  if (!res.ok) {
+    throw new Error(`YouTube RSS ${res.status}`);
+  }
+  const xml = await res.text();
+
+  const entries = xml.split("<entry>").slice(1).map((e) => "<entry>" + e.split("</entry>")[0] + "</entry>");
+  const videos: YouTubeVideoWithDesc[] = [];
+
+  for (const entry of entries) {
+    const videoId = extract(entry, "yt:videoId");
+    const title = extract(entry, "title");
+    const publishedAt = extract(entry, "published");
+    const thumbnail = extractAttr(entry, "media:thumbnail", "url");
+    const description = extract(entry, "media:description");
+    if (!videoId || !title || !publishedAt) continue;
+
+    videos.push({
+      videoId,
+      title: decodeHTMLEntities(title),
+      thumbnail: thumbnail || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      publishedAt,
+      description: description ? decodeHTMLEntities(description) : "",
+    });
+  }
+
+  return videos;
+}
+
 // היוריסטיקה לזיהוי shorts מ-RSS (אין שדה duration ב-RSS):
 // 1. כותרת מכילה #shorts/#short
 // 2. כותרת קצרה מאוד (מתחת ל-30 תווים) — לעיתים סימן ל-short

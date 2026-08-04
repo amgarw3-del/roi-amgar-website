@@ -1,0 +1,62 @@
+name: YouTube New Video Notify
+
+# חינמי דרך GitHub Actions. רץ פעם ביום ומודיע לרב בוואטסאפ אם עלה סרטון חדש.
+# שער שעת-ישראל ב-route מבטיח שרק הריצה שנופלת על 20:00 בישראל פועלת בפועל.
+
+on:
+  schedule:
+    - cron: "30 17 * * *"   # 20:30 IDT (קיץ, UTC+3)
+    - cron: "30 18 * * *"   # 20:30 IST (חורף, UTC+2)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (לא שולח בפועל)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      force:
+        description: "Force (דילוג על שער שעת-ישראל)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Build query string
+        id: query
+        run: |
+          QS=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            QS="?dry=true"
+          fi
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            if [ -z "$QS" ]; then
+              QS="?force=true"
+            else
+              QS="${QS}&force=true"
+            fi
+          fi
+          echo "qs=$QS" >> $GITHUB_OUTPUT
+
+      - name: Trigger YouTube notify endpoint
+        run: |
+          RESP=$(curl -sS -w "\n__HTTP_STATUS__%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/cron/youtube-notify${{ steps.query.outputs.qs }}")
+          BODY=$(echo "$RESP" | sed '/__HTTP_STATUS__/,$d')
+          STATUS=$(echo "$RESP" | grep "__HTTP_STATUS__" | sed 's/__HTTP_STATUS__//')
+          echo "HTTP Status: $STATUS"
+          echo "Response: $BODY"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::YouTube notify endpoint returned status $STATUS"
+            exit 1
+          fi
