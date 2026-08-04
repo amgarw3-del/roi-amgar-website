@@ -135,15 +135,51 @@ export function getEventInWindow(now: Date, windowHoursMin: number, windowHoursM
           const rawName = ev.render("he"); // "פָּרָשַׁת בְּמִדְבַּר" (עם ניקוד)
           const cleanFull = stripNikud(rawName); // "פרשת במדבר"
           const cleanShort = cleanFull.replace(/^פרשת\s+/, ""); // "במדבר"
+
+          // וריאנטים לפרשות מורכבות (כמו "שלח לך", "לך לך", "חיי שרה"):
+          // המקף העברי ־ (U+05BE) מוסר ע"י stripNikud ← מקבלים "שלחלך" במקום "שלח לך"
+          // לכן מחליפים אותו ברווח/מקף רגיל לפני הסרת הניקוד
+          const rawSpaced = rawName.replace(/־/g, " ");
+          const cleanShortSpaced = stripNikud(rawSpaced).replace(/^פרשת\s+/, "").trim(); // "שלח לך"
+          const cleanShortHyphen = cleanShortSpaced.replace(/\s+/g, "-"); // "שלח-לך"
+
+          // כל הווריאנטים — מבטיחים match בכל צורת תיוג ב-Sanity
+          const hintList = [
+            cleanShort,                        // "שלחלך" (legacy)
+            cleanShortSpaced,                  // "שלח לך"
+            cleanShortHyphen,                  // "שלח-לך"
+            cleanFull,                         // "פרשת שלחלך"
+            `פרשת ${cleanShortSpaced}`,        // "פרשת שלח לך"
+            `פרשת ${cleanShortHyphen}`,        // "פרשת שלח-לך"
+            rawName,                           // עם ניקוד (מקף עברי)
+          ];
+
+          // פרשות מחוברות (כפולות): hebcal מציין ב-ev.parsha מערך של 2 שמות
+          // (["Matot","Masei"]). הרב מתייג לרוב בפרשה בודדת ("מטות") ולא במאוחד.
+          // מפצלים על המקף העברי (־) ומוסיפים כל רכיב כ-hint נפרד.
+          // פיצול על המקף (ולא רווח) שומר על שם דו-מילי כמו "אחרי מות" שלם.
+          const parshaComponents = (ev as unknown as { parsha?: string[] }).parsha;
+          const isCombined = Array.isArray(parshaComponents) && parshaComponents.length >= 2;
+          if (isCombined) {
+            const components = rawName
+              .split("־")
+              .map((p) => stripNikud(p).replace(/^פרשת\s+/, "").trim())
+              .filter(Boolean); // ["מטות", "מסעי"]
+            for (const comp of components) {
+              hintList.push(comp, `פרשת ${comp}`);
+            }
+          }
+
+          const hints = Array.from(new Set(hintList));
+
           return {
-            nameHebrew: cleanFull, // ללא ניקוד, להצגה
-            eventKey: `parasha-${cleanShort.replace(/\s+/g, "-")}`,
+            nameHebrew: `פרשת ${cleanShortSpaced}`, // "פרשת שלח לך" — להצגה נכונה
+            eventKey: `parasha-${cleanShortHyphen}`,
             group: "parasha",
             gregorianDate: evDate,
             hebrewDate: stripNikud(hdate.renderGematriya()),
             hebrewYear: new HDate(now).getFullYear().toString(),
-            // searchHints ב-formats מרובים — להגדיל סיכוי למצוא match ב-Sanity
-            searchHints: [cleanShort, cleanFull, `פרשת ${cleanShort}`, rawName],
+            searchHints: hints,
             hoursUntil,
           };
         }

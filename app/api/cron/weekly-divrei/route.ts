@@ -21,7 +21,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
 import { getEventInWindow } from "@/lib/hebcal";
-import { findAllDivreiTora, markAsSent, ensureShortId } from "@/lib/divrei-matcher";
+import { findAllDivreiTora, filterUnsent, markAsSent, ensureShortId } from "@/lib/divrei-matcher";
 import { generateEventImage } from "@/lib/gemini-image";
 import { buildWhatsAppMultiMessage, buildAlertMessage } from "@/lib/message-builder";
 import { getGreeting } from "@/lib/greeting";
@@ -48,6 +48,8 @@ export async function GET(req: NextRequest) {
   const dryRun = req.nextUrl.searchParams.get("dry") === "true";
   const dateParam = req.nextUrl.searchParams.get("date");
   const channelsParam = req.nextUrl.searchParams.get("channels");
+  // resend=true — שליחה ידנית שמתעלמת מהדדופ (שולח גם דברי תורה שכבר נשלחו)
+  const resend = req.nextUrl.searchParams.get("resend") === "true";
   const now = dateParam ? new Date(dateParam) : new Date();
 
   const channels: Channel[] =
@@ -76,14 +78,18 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // שולף את כל דברי התורה המתאימים
-    const divarList = await findAllDivreiTora(sanity, {
+    // שולף את *כל* דברי התורה המתאימים (כולל כאלה שכבר נשלחו)
+    const allMatching = await findAllDivreiTora(sanity, {
       group: event.group,
       searchHints: event.searchHints,
     });
 
-    // === אין דבר תורה — שליחת התראה ===
-    if (divarList.length === 0) {
+    // מסנן לאלה שעוד לא נשלחו (resend=true → כולם, לשליחה ידנית)
+    const divarList = filterUnsent(allMatching, { resend });
+
+    // === אין דבר תורה במאגר כלל — שליחת התראה (פעם אחת) ===
+    // חשוב: רק כשאין תוכן באמת. אם יש תוכן שכבר נשלח — לא שולחים התראת שווא.
+    if (allMatching.length === 0) {
       const alertText = buildAlertMessage(event.nameHebrew, event.hebrewDate);
 
       if (dryRun) {
@@ -93,6 +99,25 @@ export async function GET(req: NextRequest) {
           channels,
           event,
           alertText,
+        });
+      }
+
+      // דדופ התראה: שולחים התראה פעם אחת בלבד לכל אירוע (לפי eventKey + תאריך השבת/חג).
+      // הקרון רץ כל שעה, אבל ההתראה לא תחזור על עצמה.
+      const alertLogId = `cronAlert-${event.eventKey}-${event.gregorianDate
+        .toISOString()
+        .slice(0, 10)}`.replace(/[^a-zA-Z0-9_-]/g, "-");
+
+      const alreadyAlerted = await sanity.fetch<string | null>(
+        `*[_id == $id][0]._id`,
+        { id: alertLogId }
+      );
+
+      if (alreadyAlerted) {
+        return NextResponse.json({
+          status: "alert-skipped",
+          reason: "כבר נשלחה התראה לאירוע זה",
+          event: event.nameHebrew,
         });
       }
 
@@ -134,10 +159,35 @@ export async function GET(req: NextRequest) {
         }
       }
 
+      // רישום שההתראה נשלחה — רק אם לפחות ערוץ אחד הצליח, כדי שכשל זמני ינסה שוב בשעה הבאה
+      const alertSucceeded =
+        results.email === "sent" ||
+        (typeof results.whatsapp === "string" && results.whatsapp.startsWith("sent"));
+
+      if (alertSucceeded) {
+        await sanity.createIfNotExists({
+          _id: alertLogId,
+          _type: "cronAlertLog",
+          eventKey: event.eventKey,
+          eventName: event.nameHebrew,
+          sentAt: new Date().toISOString(),
+        });
+      }
+
       return NextResponse.json({ status: "alert-sent", event: event.nameHebrew, results });
     }
 
-    // === יש דברי תורה ===
+    // === יש תוכן במאגר אבל הכל כבר נשלח — לא עושים כלום (לא התראה, לא שליחה כפולה) ===
+    if (divarList.length === 0) {
+      return NextResponse.json({
+        status: "already-sent",
+        message: "כל דברי התורה לאירוע זה כבר נשלחו",
+        event: event.nameHebrew,
+        matchingCount: allMatching.length,
+      });
+    }
+
+    // === יש דברי תורה לשליחה ===
     // וודא shortId לכל אחד
     const divarListWithShortId = await Promise.all(
       divarList.map(async (d) => ({

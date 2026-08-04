@@ -20,7 +20,33 @@ export interface MatchedDivarTora {
   publishedAt: string | null;
 }
 
-/** מחזיר את כל דברי התורה המתאימים לאירוע (ממוינים לפי lastSentAt) */
+/**
+ * נרמול שם עברי להתאמה עמידה בפני הבדלי כתיב.
+ * מטפל בכל סוגי אי-ההתאמה שנתקלנו בהם:
+ *   1. ניקוד (hebcal מנקד, Sanity לא) — "פִּינְחָס" מול "פינחס"
+ *   2. כתיב מלא/חסר ביו"ד/וי"ו — "פינחס"↔"פנחס", "מצורע"↔"מצרע", "קדושים"↔"קדשים"
+ *   3. רווחים ומקפים — "שלח לך" / "שלח־לך" / "שלחלך"
+ *
+ * מסיר יו"ד/וי"ו (אמות קריאה) מכל מילה **פרט לאות הראשונה** — כדי לא לשבש
+ * שמות שמתחילים בוי"ו/יו"ד ("וישלח", "וילך"). נבדק: 0 התנגשויות בין 54 הפרשות
+ * (הסרה גלובלית של וי"ו הייתה יוצרת התנגשות "וישלח"↔"שלח").
+ */
+function normalizeHebrewName(s: string): string {
+  return (s || "")
+    .replace(/[֑-ׇ]/g, "") // ניקוד וטעמי מקרא
+    .replace(/[\s\-־]+/g, " ") // מאחד רווחים ומקפים לרווח בודד
+    .split(" ")
+    .map((w) => (w.length ? w[0] + w.slice(1).replace(/[יו]/g, "") : w)) // שומר אות ראשונה
+    .join("")
+    .trim();
+}
+
+/**
+ * מחזיר את *כל* דברי התורה המתאימים לאירוע (כולל כאלה שכבר נשלחו).
+ * ההתאמה נעשית ב-JS עם נרמול (לא GROQ exact) — עמיד בפני הבדלי כתיב.
+ * הסינון לפי lastSentAt נעשה ב-route ע"י filterUnsent — כך אפשר להבחין בין
+ * "אין תוכן במאגר" (→ התראה) לבין "יש תוכן אבל כבר נשלח" (→ לא עושים כלום).
+ */
 export async function findAllDivreiTora(
   sanity: SanityClient,
   params: {
@@ -30,16 +56,13 @@ export async function findAllDivreiTora(
 ): Promise<MatchedDivarTora[]> {
   const { group, searchHints } = params;
 
+  // שולף את כל דברי התורה בקבוצה (parasha/moed/...) עם נתוני התיוג שלהם.
+  // ההתאמה לשם האירוע נעשית ב-JS למטה עם נרמול.
   const query = `
     *[
       _type == "divarTora" &&
       status == "published" &&
-      count(subTopics[@->group == $group]) > 0 &&
-      (
-        count(subTopics[@->hebrewName in $hints]) > 0 ||
-        count(subTopics[count((@->aliases)[@ in $hints]) > 0]) > 0 ||
-        count(searchKeywords[@ in $hints]) > 0
-      )
+      count(subTopics[@->group == $group]) > 0
     ] | order(coalesce(lastSentAt, "1970-01-01") asc, publishedAt desc) {
       _id,
       title,
@@ -47,16 +70,48 @@ export async function findAllDivreiTora(
       teaser,
       shortId,
       lastSentAt,
-      publishedAt
+      publishedAt,
+      "tagNames": subTopics[@->group == $group]->hebrewName,
+      "tagAliases": subTopics[@->group == $group]->aliases[],
+      searchKeywords
     }
   `;
 
-  const results = await sanity.fetch<MatchedDivarTora[]>(query, {
-    group,
-    hints: searchHints,
+  type Row = MatchedDivarTora & {
+    tagNames?: (string | null)[];
+    tagAliases?: (string | null)[];
+    searchKeywords?: (string | null)[];
+  };
+
+  const rows = (await sanity.fetch<Row[]>(query, { group })) ?? [];
+
+  const normHints = new Set(searchHints.map(normalizeHebrewName).filter(Boolean));
+
+  const matched = rows.filter((r) => {
+    const candidates = [
+      ...(r.tagNames ?? []),
+      ...(r.tagAliases ?? []),
+      ...(r.searchKeywords ?? []),
+    ];
+    return candidates.some((c) => c && normHints.has(normalizeHebrewName(c)));
   });
 
-  return results ?? [];
+  // מסיר את שדות העזר לפני החזרה
+  return matched.map(({ tagNames, tagAliases, searchKeywords, ...rest }) => rest);
+}
+
+/**
+ * מסנן דברי תורה שעוד לא נשלחו (או שנשלחו לפני יותר מ-6 ימים — אירוע שנה שעברה).
+ * דבר תורה חדש (ללא lastSentAt) תמיד נכלל.
+ * resend=true → מחזיר את כולם (התעלמות מהדדופ, לשליחה ידנית).
+ */
+export function filterUnsent(
+  divrei: MatchedDivarTora[],
+  opts: { resend?: boolean } = {}
+): MatchedDivarTora[] {
+  if (opts.resend) return divrei;
+  const cutoff = new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString();
+  return divrei.filter((d) => !d.lastSentAt || d.lastSentAt < cutoff);
 }
 
 /** @deprecated השתמש ב-findAllDivreiTora */
