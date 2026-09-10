@@ -3,6 +3,7 @@ import VideoCard from "@/components/VideoCard";
 import BlogCard from "@/components/BlogCard";
 import DivarToraCard from "@/components/DivarToraCard";
 import SubTopicSidebar from "@/components/SubTopicSidebar";
+import RoshHashanaBookletBanner from "@/components/moadim/RoshHashanaBookletBanner";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -53,6 +54,9 @@ export default async function CategoryPage({ params }: Props) {
 
   const mainContent = (
     <>
+      {/* באנר חוברת ראש השנה — רק במועדים */}
+      {category === "moadim" && <RoshHashanaBookletBanner />}
+
       {/* שיעורים */}
       {videos.length > 0 && (
         <section className="mb-12">
