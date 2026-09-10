@@ -17,14 +17,18 @@ export default function RoshHashanaBookletBanner() {
         <div>
           <div
             className="text-xs font-semibold mb-2 tracking-wider"
-            style={{ color: "var(--color-ochre)" }}
+            style={{ color: "#d9a76b" }}
           >
             ◆ חדש למועדים
           </div>
-          <h3 className="text-white text-xl md:text-2xl font-bold mb-1">
+          {/* צבע inline — globals.css קובע color:navy לכל h1-h6 וגובר על text-white */}
+          <h3
+            className="text-xl md:text-2xl font-bold mb-1"
+            style={{ color: "#ffffff" }}
+          >
             הלכות והנחיות לראש השנה תשפ״ז
           </h3>
-          <p className="text-white/70 text-sm md:text-base">
+          <p className="text-sm md:text-base" style={{ color: "rgba(255,255,255,0.78)" }}>
             חוברת מלאה להורדה, הדפסה ושיתוף — כולל דיני ראש השנה שחל בשבת
           </p>
         </div>
