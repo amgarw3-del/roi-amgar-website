@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { YoutubeTranscript } from "youtube-transcript";
 import { createClient, SanityClient } from "@sanity/client";
 import { fetchYouTubeVideos } from "@/lib/youtube";
+import { fetchTranscriptInnerTube } from "@/lib/youtube/innertube-transcript";
 import { generateDvarTora } from "@/lib/generate-dvar-tora";
 import { sendDvarToraForApproval } from "@/lib/send-email";
 
@@ -15,6 +16,11 @@ async function getProcessedVideoIds(sanity: SanityClient): Promise<Set<string>> 
 }
 
 async function fetchTranscript(videoId: string): Promise<string | null> {
+  // שיטת InnerTube (ANDROID) ראשית — עוקפת את חסימת השרת של יוטיוב
+  const viaInnerTube = await fetchTranscriptInnerTube(videoId);
+  if (viaInnerTube) return viaInnerTube;
+
+  // fallback לספריית youtube-transcript (עלול להיכשל בשרת)
   try {
     const items = await YoutubeTranscript.fetchTranscript(videoId, { lang: "iw" });
     return items.map((i) => i.text).join(" ");

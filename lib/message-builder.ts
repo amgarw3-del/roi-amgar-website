@@ -21,10 +21,33 @@ export interface MessageInput {
   greetingContext: GreetingContext;
 }
 
+export interface EventLink {
+  label: string;
+  url: string;
+}
+
 export interface MultiMessageInput {
   items: DivarItem[];
   newsletterUrl: string;
   greetingContext: GreetingContext;
+  /** קישור משאב ספציפי לאירוע (למשל חוברת הלכות) — מופיע לפני הניוזלטר */
+  eventLink?: EventLink | null;
+}
+
+/**
+ * קישורי משאב קבועים לפי eventKey — דפי הנחיות/חוברות חג.
+ * נכללים אוטומטית בהודעת הוואטסאפ של האירוע (כל שנה מחדש).
+ */
+const EVENT_RESOURCE_LINKS: Record<string, EventLink> = {
+  "rosh-hashanah": {
+    label: "📖 חוברת הלכות ראש השנה:",
+    url: "https://rosh-hashana-torah-lachaim.vercel.app",
+  },
+};
+
+/** מחזיר את קישור המשאב לאירוע (אם קיים). */
+export function getEventLink(eventKey: string): EventLink | null {
+  return EVENT_RESOURCE_LINKS[eventKey] ?? null;
 }
 
 /**
@@ -44,7 +67,7 @@ export function buildWhatsAppMessage(input: MessageInput): string {
  * אם יש כמה — כל אחד עם הפרדת ─────.
  */
 export function buildWhatsAppMultiMessage(input: MultiMessageInput): string {
-  const { items, newsletterUrl, greetingContext } = input;
+  const { items, newsletterUrl, greetingContext, eventLink } = input;
   const greeting = getGreeting(greetingContext);
 
   if (items.length === 0) return "";
@@ -64,15 +87,22 @@ export function buildWhatsAppMultiMessage(input: MultiMessageInput): string {
     )
     .join(`\n\n${separator}\n\n`);
 
-  return [
-    itemsText,
-    "",
+  const lines = [itemsText, ""];
+
+  // קישור משאב לאירוע (חוברת הלכות וכו') — לפני הניוזלטר
+  if (eventLink) {
+    lines.push(eventLink.label, eventLink.url, "");
+  }
+
+  lines.push(
     `📬 להצטרפות לניוזלטר:`,
     newsletterUrl,
     "",
     greeting,
-    `*הרב רועי אמגר*`,
-  ].join("\n");
+    `*הרב רועי אמגר*`
+  );
+
+  return lines.join("\n");
 }
 
 /**

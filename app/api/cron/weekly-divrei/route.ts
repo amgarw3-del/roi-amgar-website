@@ -23,7 +23,7 @@ import { createClient } from "@sanity/client";
 import { getEventInWindow } from "@/lib/hebcal";
 import { findAllDivreiTora, filterUnsent, markAsSent, ensureShortId } from "@/lib/divrei-matcher";
 import { generateEventImage } from "@/lib/gemini-image";
-import { buildWhatsAppMultiMessage, buildAlertMessage } from "@/lib/message-builder";
+import { buildWhatsAppMultiMessage, buildAlertMessage, getEventLink } from "@/lib/message-builder";
 import { getGreeting } from "@/lib/greeting";
 import { sendDivarToraMessage, sendWhatsAppText } from "@/lib/whatsapp-sender";
 import { sendGreenDivarTora, sendGreenText } from "@/lib/whatsapp-green-api";
@@ -216,6 +216,7 @@ export async function GET(req: NextRequest) {
       items,
       newsletterUrl,
       greetingContext,
+      eventLink: getEventLink(event.eventKey),
     });
 
     const greeting = getGreeting(greetingContext);
