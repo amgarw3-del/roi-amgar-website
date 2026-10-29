@@ -59,6 +59,8 @@ export async function POST(req: NextRequest) {
 
     const mutations = [{
       create: {
+        // "private." prefix keeps the doc out of the public (unauthenticated) API.
+        _id: `private.${crypto.randomUUID()}`,
         _type: "subscriber",
         name,
         phone,

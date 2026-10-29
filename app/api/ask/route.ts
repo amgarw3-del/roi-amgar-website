@@ -78,6 +78,8 @@ export async function POST(req: NextRequest) {
 
   try {
     await sanity.create({
+      // "private." prefix keeps the asker's details out of the public (unauthenticated) API.
+      _id: `private.${crypto.randomUUID()}`,
       _type: "qna",
       question,
       askerName: name || "אנונימי",

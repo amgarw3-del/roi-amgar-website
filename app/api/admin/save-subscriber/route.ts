@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, _id });
     }
     const doc = await sanity.create({
+      // "private." prefix keeps the doc out of the public (unauthenticated) API.
+      _id: `private.${crypto.randomUUID()}`,
       _type: "subscriber",
       ...data,
       createdAt: new Date().toISOString(),
