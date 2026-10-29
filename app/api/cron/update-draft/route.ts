@@ -23,16 +23,18 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { id, title, teaser, content, status } = body as {
+  const { id, title, teaser, content, status, categorySlug, subTopicSlugs } = body as {
     id?: string;
     title?: string;
     teaser?: string;
     content?: string;
     status?: string;
+    categorySlug?: string;
+    subTopicSlugs?: string[];
   };
 
-  if (!id || !title || !content) {
-    return NextResponse.json({ error: "id, title, content הם חובה" }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ error: "id הוא חובה" }, { status: 400 });
   }
 
   const sanity = createClient({
@@ -56,19 +58,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "המסמך אינו divarTora" }, { status: 400 });
     }
 
-    const newStatus = status === "published" ? "published" : "draft";
-    const patch: Record<string, unknown> = {
-      title,
-      teaser: teaser ?? "",
-      content,
-      status: newStatus,
-    };
-    // טיוטה = לא מפורסם; פרסום = חותמת זמן
-    patch.publishedAt = newStatus === "published" ? new Date().toISOString() : null;
+    // מעדכנים רק שדות שסופקו (מאפשר עדכון תוכן, תיוג, או שניהם)
+    const patch: Record<string, unknown> = {};
+    if (title !== undefined) patch.title = title;
+    if (teaser !== undefined) patch.teaser = teaser;
+    if (content !== undefined) patch.content = content;
+    if (status !== undefined) {
+      const newStatus = status === "published" ? "published" : "draft";
+      patch.status = newStatus;
+      patch.publishedAt = newStatus === "published" ? new Date().toISOString() : null;
+    }
+
+    // תיוג: קטגוריה (נושא)
+    if (categorySlug !== undefined) {
+      const catId = await sanity.fetch<string | null>(
+        `*[_type=="category" && slug.current==$s][0]._id`,
+        { s: categorySlug }
+      );
+      patch.category = catId ? { _type: "reference", _ref: catId } : null;
+    }
+    // תיוג: תתי-נושא
+    if (subTopicSlugs !== undefined) {
+      const ids = subTopicSlugs.length
+        ? await sanity.fetch<string[]>(
+            `*[_type=="subTopic" && slug.current in $slugs]._id`,
+            { slugs: subTopicSlugs }
+          )
+        : [];
+      patch.subTopics = ids.map((sid) => ({ _type: "reference", _ref: sid, _key: sid }));
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return NextResponse.json({ error: "לא סופק שום שדה לעדכון" }, { status: 400 });
+    }
 
     await sanity.patch(id).set(patch).commit();
 
-    return NextResponse.json({ ok: true, id, status: newStatus });
+    return NextResponse.json({ ok: true, id, updated: Object.keys(patch) });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 500 });
