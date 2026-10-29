@@ -8,6 +8,13 @@ import CategoryGrid, { type CategoryItem, type SubTopicItem } from "@/components
 import MarkdownEditor from "@/components/admin/MarkdownEditor";
 import DivarToraContent from "@/components/DivarToraContent";
 
+// 05x-xxxxxxx → wa.me/9725xxxxxxxx
+function toWhatsAppLink(phone: string): string {
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = "972" + digits.slice(1);
+  return `https://wa.me/${digits}`;
+}
+
 interface Props {
   unanswered: QnaItem[];
   answered: QnaItem[];
@@ -194,6 +201,25 @@ function QnaRow({
             </span>
             {item.askerName && (
               <span className="text-xs text-gray-400">{item.askerName}</span>
+            )}
+            {item.phone && (
+              <>
+                <a
+                  href={`tel:${item.phone}`}
+                  dir="ltr"
+                  className="text-xs text-primary font-medium hover:underline"
+                >
+                  {item.phone}
+                </a>
+                <a
+                  href={toWhatsAppLink(item.phone)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700 hover:bg-green-200"
+                >
+                  וואטסאפ
+                </a>
+              </>
             )}
             <span className="text-xs text-gray-300">
               {new Date(item._createdAt).toLocaleDateString("he-IL")}

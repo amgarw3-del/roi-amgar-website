@@ -18,6 +18,7 @@ export interface QnaItem {
   question: string;
   answer?: string;
   askerName?: string;
+  phone?: string;
   questionType?: string;
   isPublic: boolean;
   publishedAt?: string;
@@ -31,7 +32,7 @@ export default async function AdminQnaPage() {
   const [all, categories, subTopics] = await Promise.all([
     sanity.fetch<QnaItem[]>(
       `*[_type == "qna"] | order(_createdAt desc) [0...100] {
-        _id, question, answer, askerName, questionType, isPublic, publishedAt, _createdAt,
+        _id, question, answer, askerName, phone, questionType, isPublic, publishedAt, _createdAt,
         category->{_id, hebrewName},
         extraCategories[]->{_id, hebrewName},
         subTopics[]->{_id, hebrewName}
