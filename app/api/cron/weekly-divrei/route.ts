@@ -2,7 +2,7 @@
  * app/api/cron/weekly-divrei/route.ts
  *
  * Cron job — רץ כל שעה דרך GitHub Actions (חינמי).
- * אם יש אירוע יהודי בעוד 29-31 שעות:
+ * אם יש אירוע יהודי בעוד 42-54 שעות (או 14-42 — חלון מאוחר לתוכן שפורסם באיחור):
  *   1. שולף את כל דברי התורה המתאימים מ-Sanity
  *   2. יוצר/מאחזר תמונת אירוע (Pollinations.ai, cached)
  *   3. בונה הודעת WhatsApp (כל דברי התורה בהודעה אחת)
@@ -36,6 +36,10 @@ export const maxDuration = 60;
 // lastSentAt מבטיח שליחה חד-פעמית בלבד
 const WINDOW_MIN = 42;
 const WINDOW_MAX = 54;
+// חלון מאוחר: דבר תורה שפורסם אחרי החלון הראשי עדיין נשלח, עד ~14 שעות לפני
+// (האירוע מחושב מחצות UTC של היום עצמו → 14h = שישי/ערב חג בצהריים, לפני הדלקת נרות).
+// בחלון הזה לא שולחים התראת "חסר תוכן" — רק דברי תורה חדשים שטרם נשלחו.
+const LATE_WINDOW_MIN = 14;
 
 type Channel = "email" | "whatsapp";
 
@@ -68,12 +72,17 @@ export async function GET(req: NextRequest) {
   });
 
   try {
-    const event = getEventInWindow(now, WINDOW_MIN, WINDOW_MAX);
+    let event = getEventInWindow(now, WINDOW_MIN, WINDOW_MAX);
+    let late = false;
+    if (!event) {
+      event = getEventInWindow(now, LATE_WINDOW_MIN, WINDOW_MIN);
+      late = event !== null;
+    }
 
     if (!event) {
       return NextResponse.json({
         status: "no-event",
-        message: `No event in window ${WINDOW_MIN}-${WINDOW_MAX}h from ${now.toISOString()}`,
+        message: `No event in window ${LATE_WINDOW_MIN}-${WINDOW_MAX}h from ${now.toISOString()}`,
         now: now.toISOString(),
       });
     }
@@ -86,6 +95,15 @@ export async function GET(req: NextRequest) {
 
     // מסנן לאלה שעוד לא נשלחו (resend=true → כולם, לשליחה ידנית)
     const divarList = filterUnsent(allMatching, { resend });
+
+    // חלון מאוחר בלי תוכן — ההתראה כבר נשלחה (או תישלח) בחלון הראשי
+    if (late && allMatching.length === 0) {
+      return NextResponse.json({
+        status: "late-no-content",
+        event: event.nameHebrew,
+        hoursUntil: event.hoursUntil,
+      });
+    }
 
     // === אין דבר תורה במאגר כלל — שליחת התראה (פעם אחת) ===
     // חשוב: רק כשאין תוכן באמת. אם יש תוכן שכבר נשלח — לא שולחים התראת שווא.
@@ -240,6 +258,7 @@ export async function GET(req: NextRequest) {
     if (dryRun) {
       return NextResponse.json({
         status: "dry-run",
+        late,
         channels,
         event,
         divarCount: divarListWithShortId.length,
@@ -338,7 +357,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      status: "sent",
+      status: late ? "sent-late" : "sent",
       event: event.nameHebrew,
       divarCount: divarListWithShortId.length,
       divrei: divarListWithShortId.map((d) => ({ title: d.title, shortId: d.shortId })),
