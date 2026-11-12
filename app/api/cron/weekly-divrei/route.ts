@@ -1,7 +1,10 @@
 /**
  * app/api/cron/weekly-divrei/route.ts
  *
- * Cron job — רץ כל שעה דרך GitHub Actions (חינמי).
+ * Cron job — מופעל משלושה מקורות (כל אחד מגבה את האחרים, lastSentAt מונע כפילות):
+ *   - GitHub Actions כל שעה (בפועל רק כל 6-8 שעות!)
+ *   - Vercel Cron יומי 03:00 UTC (vercel.json) — נופל תמיד בחלון הראשי וגם בחלון המאוחר
+ *   - מיד אחרי פרסום דבר תורה (?trigger=publish)
  * אם יש אירוע יהודי בעוד 42-54 שעות (או 14-42 — חלון מאוחר לתוכן שפורסם באיחור):
  *   1. שולף את כל דברי התורה המתאימים מ-Sanity
  *   2. יוצר/מאחזר תמונת אירוע (Pollinations.ai, cached)
@@ -26,7 +29,7 @@ import { generateEventImage } from "@/lib/gemini-image";
 import { buildWhatsAppMultiMessage, buildAlertMessage, getEventLink } from "@/lib/message-builder";
 import { getGreeting } from "@/lib/greeting";
 import { sendDivarToraMessage, sendWhatsAppText } from "@/lib/whatsapp-sender";
-import { sendGreenDivarTora, sendGreenText } from "@/lib/whatsapp-green-api";
+import { sendGreenDivarTora, sendGreenText, checkGreenStatus } from "@/lib/whatsapp-green-api";
 import { sendWeeklyDvarEmail, sendMissingDvarAlert } from "@/lib/send-email";
 
 export const dynamic = "force-dynamic";
@@ -40,8 +43,22 @@ const WINDOW_MAX = 54;
 // (האירוע מחושב מחצות UTC של היום עצמו → 14h = שישי/ערב חג בצהריים, לפני הדלקת נרות).
 // בחלון הזה לא שולחים התראת "חסר תוכן" — רק דברי תורה חדשים שטרם נשלחו.
 const LATE_WINDOW_MIN = 14;
+// הפעלה מיידית אחרי פרסום (?trigger=publish) — רצפה נמוכה יותר: עד ~12h לפני חצות UTC
+// (שישי ~14:00 שעון ישראל), כדי שגם דבר תורה שאושר בשישי בבוקר יישלח.
+const PUBLISH_WINDOW_MIN = 12;
 
 type Channel = "email" | "whatsapp";
+
+/** null = Green API לא מוגדר. אחרת — מצב החיבור (ok רק כש-authorized). */
+async function greenState(): Promise<{ ok: boolean; state: string } | null> {
+  if (!process.env.GREEN_API_ID_INSTANCE || !process.env.GREEN_API_TOKEN) return null;
+  try {
+    const s = await checkGreenStatus();
+    return { ok: s.ok, state: s.state };
+  } catch (e) {
+    return { ok: false, state: `error: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
 
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("authorization")?.replace("Bearer ", "");
@@ -54,6 +71,8 @@ export async function GET(req: NextRequest) {
   const channelsParam = req.nextUrl.searchParams.get("channels");
   // resend=true — שליחה ידנית שמתעלמת מהדדופ (שולח גם דברי תורה שכבר נשלחו)
   const resend = req.nextUrl.searchParams.get("resend") === "true";
+  // trigger=publish — הופעל מפרסום דבר תורה (lib/trigger-weekly-divrei.ts)
+  const fromPublish = req.nextUrl.searchParams.get("trigger") === "publish";
   const now = dateParam ? new Date(dateParam) : new Date();
 
   const channels: Channel[] =
@@ -75,7 +94,7 @@ export async function GET(req: NextRequest) {
     let event = getEventInWindow(now, WINDOW_MIN, WINDOW_MAX);
     let late = false;
     if (!event) {
-      event = getEventInWindow(now, LATE_WINDOW_MIN, WINDOW_MIN);
+      event = getEventInWindow(now, fromPublish ? PUBLISH_WINDOW_MIN : LATE_WINDOW_MIN, WINDOW_MIN);
       late = event !== null;
     }
 
@@ -96,8 +115,9 @@ export async function GET(req: NextRequest) {
     // מסנן לאלה שעוד לא נשלחו (resend=true → כולם, לשליחה ידנית)
     const divarList = filterUnsent(allMatching, { resend });
 
-    // חלון מאוחר בלי תוכן — ההתראה כבר נשלחה (או תישלח) בחלון הראשי
-    if (late && allMatching.length === 0) {
+    // חלון מאוחר בלי תוכן — ההתראה כבר נשלחה (או תישלח) בחלון הראשי.
+    // הפעלה מפרסום של דבר תורה לאירוע אחר — לא שולחים התראת "חסר תוכן" (זה תפקיד הקרון).
+    if ((late || fromPublish) && allMatching.length === 0) {
       return NextResponse.json({
         status: "late-no-content",
         event: event.nameHebrew,
@@ -152,7 +172,10 @@ export async function GET(req: NextRequest) {
 
       if (channels.includes("whatsapp")) {
         let sent = false;
-        if (process.env.GREEN_API_ID_INSTANCE && process.env.GREEN_API_TOKEN) {
+        const green = await greenState();
+        if (green && !green.ok) {
+          results.whatsapp_green = `not-connected (state: ${green.state})`;
+        } else if (green) {
           try {
             const r = await sendGreenText(alertText);
             if (r.ok) {
@@ -259,6 +282,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         status: "dry-run",
         late,
+        whatsappState: await greenState(),
         channels,
         event,
         divarCount: divarListWithShortId.length,
@@ -304,7 +328,11 @@ export async function GET(req: NextRequest) {
     if (channels.includes("whatsapp")) {
       let sent = false;
 
-      if (process.env.GREEN_API_ID_INSTANCE && process.env.GREEN_API_TOKEN) {
+      // Green API מחזיר 200 גם כשהמכשיר מנותק — בודקים מצב חיבור לפני שליחה
+      const green = await greenState();
+      if (green && !green.ok) {
+        results.whatsapp_green = `not-connected (state: ${green.state}) — ההודעה לא נשלחה בוואטסאפ, רק במייל`;
+      } else if (green) {
         try {
           const r = await sendGreenDivarTora(whatsappText, imageUrl);
           const imgOk = r.image?.ok;

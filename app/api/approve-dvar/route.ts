@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
 import { timingSafeEqual, createHash } from "crypto";
+import { triggerWeeklyDivreiAfterPublish } from "@/lib/trigger-weekly-divrei";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,8 @@ export async function GET(req: NextRequest) {
       .patch(id)
       .set({ status: "published", publishedAt: new Date().toISOString() })
       .commit();
+
+    triggerWeeklyDivreiAfterPublish();
 
     return NextResponse.redirect(
       `https://bssgoew8.sanity.studio/structure/divarTora;${id}`,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
 import { requireAdmin } from "@/lib/require-admin";
+import { triggerWeeklyDivreiAfterPublish } from "@/lib/trigger-weekly-divrei";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,9 @@ export async function POST(req: NextRequest) {
       : [];
 
     await sanity.patch(id).set(patch).commit();
+
+    // גם עריכה של דבר תורה שכבר פורסם (למשל הוספת תיוג פרשה) — הקרון מסנן כפילויות
+    if (status === "published") triggerWeeklyDivreiAfterPublish();
 
     return NextResponse.json({ ok: true });
   } catch (err) {

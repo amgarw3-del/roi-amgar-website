@@ -6,7 +6,8 @@ name: Weekly Divrei Tora Cron
 on:
   schedule:
     # כל שעה עגולה (UTC). שעון ישראל = UTC+2 חורף / UTC+3 קיץ.
-    - cron: "0 * * * *"
+    # דקה 23 ולא 00 — בשעה עגולה GitHub מעמיס ומדלג על ריצות. גיבוי: Vercel Cron יומי + הפעלה בפרסום.
+    - cron: "23 * * * *"
   # מאפשר הפעלה ידנית מ-GitHub UI לבדיקות
   workflow_dispatch:
     inputs:

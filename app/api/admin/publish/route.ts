@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@sanity/client";
 import { requireAdmin } from "@/lib/require-admin";
+import { triggerWeeklyDivreiAfterPublish } from "@/lib/trigger-weekly-divrei";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,8 @@ export async function POST(req: NextRequest) {
     .patch(docId!)
     .set({ status: "published", publishedAt: new Date().toISOString() })
     .commit();
+
+  triggerWeeklyDivreiAfterPublish();
 
   return NextResponse.json({ ok: true });
 }
