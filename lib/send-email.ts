@@ -139,7 +139,8 @@ export async function sendMissingDvarAlert(eventName: string, hebrewDate: string
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
   const to = process.env.NOTIFICATION_EMAIL || user;
-  if (!user || !pass) return;
+  // לזרוק ולא לחזור בשקט — אחרת הקרון מדווח "email: sent" על מייל שלא יצא (11.11.2026)
+  if (!user || !pass) throw new Error("GMAIL_USER or GMAIL_APP_PASSWORD not configured");
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
